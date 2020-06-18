@@ -6,8 +6,7 @@ Scheme Interpreter in Rust
 
 ## Const
 
-|     |       |
 | --- | ----- |
-| **#T**  | true  |
-| **#F**  | false |
-| **#N**  | Null  |
+| **#T** | true |
+| **#F** | false |
+| **#N** | Null |

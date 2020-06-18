@@ -1,4 +1,4 @@
-use super::lib::{ScmObject, Value};
+use super::lib::{ScmObject};
 
 pub fn eval(input: ScmObject) -> ScmObject {
     input

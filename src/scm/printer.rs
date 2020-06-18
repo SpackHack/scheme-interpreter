@@ -3,23 +3,21 @@ use super::lib::{ScmObject, Value as Type};
 pub fn print(input: ScmObject) {
     print!(">");
     match input.value {
-        Type::Error (error) => {
+        Type::Error(error) => {
             println!("{}", error);
         }
-        Type::Number (numbers) => {
+        Type::Number(numbers) => {
             println!("{}", numbers);
         }
-        Type::Chars (chars) => {
+        Type::Chars(chars) => {
             println!("{}", chars);
         }
-        Type::Bool (bool) => {
+        Type::Bool(bool) => {
             println!("{}", bool);
         }
         Type::None => {
             println!("NULL");
         }
-        _ => {
-            println!("Not implementet")
-        }
+        _ => println!("Not implementet"),
     }
 }

@@ -13,7 +13,7 @@ pub enum Value {
 impl ScmObject {
     pub fn new_error(chars: String) -> Self {
         ScmObject {
-            value: Value::Error(chars.to_string()),
+            value: Value::Error(chars),
         }
     }
 
@@ -23,9 +23,9 @@ impl ScmObject {
         }
     }
 
-    pub fn new_chars(chars: String) -> Self {
+    pub fn new_chars(string: String) -> Self {
         ScmObject {
-            value: Value::Chars(chars.to_string()),
+            value: Value::Chars(string),
         }
     }
 

@@ -4,10 +4,11 @@ use std::io::{stdin, Read};
 fn next_char() -> Option<char> {
     let mut character = [0];
     match stdin().read(&mut character) {
-        OK => {
+        Ok (n) => {
             return Some (character[0] as char);
         }
-        err => {
+        Err (e) => {
+            println!("Read Error: {}", e);
             return None;
         }
     }
@@ -21,9 +22,8 @@ pub fn read() -> Option<ScmObject> {
     
                 if is_whitespace(c) {
                     continue;
-                    // skip_whitespace();
                 }
-                if is_number(c) {
+                if is_number(c) || c == '-'{
                     break Some (read_number(c));
                 }
                 if c == '"' {
@@ -49,6 +49,8 @@ pub fn read() -> Option<ScmObject> {
     }
 }
 
+// cut char after number
+// if number to big rust panic
 fn read_number(firstchar: char) -> ScmObject {
     let mut number: i64 = 0;
     let mut is_negativ: bool = true;
@@ -56,23 +58,24 @@ fn read_number(firstchar: char) -> ScmObject {
         is_negativ = false;
         number = firstchar as i64 - '0' as i64;
     }
-
-    let mut character = [0];
-    stdin().read(&mut character).unwrap();
-    let mut char: char = character[0] as char;
-
-    while char >= '0' && char <= '9' {
-        number = number * 10;
-        number = number + char as i64 - '0' as i64;
-        stdin().read(&mut character).unwrap();
-        char = character[0] as char;
+    return loop {
+        match next_char() {
+            Some (c) => {
+                if is_number(c) {
+                    number = number * 10;
+                    number = number + c as i64 - '0' as i64;
+                } else {
+                    if is_negativ {
+                        number = number * -1;
+                    }
+                    break ScmObject::new_number(number);
+                }
+            }
+            None => {
+                break ScmObject::new_error(String::from("Error in read Number"));
+            }
+        }
     }
-
-    if is_negativ {
-        number = number * -1;
-    }
-
-    return ScmObject::new_number(number);
 }
 
 // Endlosschleife wenn string nicht beendet
@@ -97,6 +100,7 @@ fn read_chars() -> ScmObject {
     }
 }
 
+// cut char after const
 fn read_const() -> ScmObject {
     match next_char() {
         Some (character) => {
@@ -135,7 +139,7 @@ fn is_whitespace(character: char) -> bool {
 }
 
 fn is_number(character: char) -> bool {
-    if character >= '0' && character <= '9' || character == '-' {
+    if character >= '0' && character <= '9'{
         return true;
     }
     false
