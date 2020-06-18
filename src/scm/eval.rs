@@ -1,5 +1,5 @@
-use super::lib;
+use super::lib::{ScmObject, Value};
 
-pub fn eval(input: lib::ScmObject) -> lib::ScmObject {
+pub fn eval(input: ScmObject) -> ScmObject {
     input
 }

@@ -1,36 +1,55 @@
-use super::lib;
+use super::lib::{ScmObject};
 use std::io::{stdin, Read};
 
-pub fn read() -> Option<lib::ScmObject> {
+fn next_char() -> Option<char> {
     let mut character = [0];
-    stdin().read(&mut character).unwrap();
-
-    let mut char: char = character[0] as char;
-    println!("Cahr Read: {}", character[0] as char);
-
-    while is_whitespace(char) {
-        stdin().read(&mut character).unwrap();
-        char = character[0] as char;
+    match stdin().read(&mut character) {
+        OK => {
+            return Some (character[0] as char);
+        }
+        err => {
+            return None;
+        }
     }
-
-    if is_number(char) {
-        return Some (read_number(char));
-    }
-    if char == '"' {
-        return Some (read_chars());
-    } 
-    if char == ';' {
-        skip_line();
-        return None;
-    }
-    if char == '#' {
-        return Some (read_bool());
-    }
-
-    Some (lib::ScmObject::new_error("Error in Reader".to_string()))
+    
 }
 
-fn read_number(firstchar: char) -> lib::ScmObject {
+pub fn read() -> Option<ScmObject> {
+    return loop {
+        match next_char() {
+            Some (c) => {
+    
+                if is_whitespace(c) {
+                    continue;
+                    // skip_whitespace();
+                }
+                if is_number(c) {
+                    break Some (read_number(c));
+                }
+                if c == '"' {
+                    break Some (read_chars());
+                }
+                if c == ';' {
+                    skip_line();
+                    break None;
+                }
+                if c == '#' {
+                    break Some (read_const());
+                }
+                if c == '\n' {
+                    break None;
+                }
+                println!("ERR {} : {}", c , c as i64);
+                break Some (ScmObject::new_error("Error in Reader".to_string()));
+            }
+            None => {
+                break Some (ScmObject::new_error("Error in next Cahr".to_string()))
+            }
+        }
+    }
+}
+
+fn read_number(firstchar: char) -> ScmObject {
     let mut number: i64 = 0;
     let mut is_negativ: bool = true;
     if firstchar != '-' {
@@ -53,27 +72,55 @@ fn read_number(firstchar: char) -> lib::ScmObject {
         number = number * -1;
     }
 
-    return lib::ScmObject::new_number(number);
+    return ScmObject::new_number(number);
 }
 
-fn read_chars() -> lib::ScmObject {
+// Endlosschleife wenn string nicht beendet
+fn read_chars() -> ScmObject {
     let mut chars = String::new();
-
-    let mut character = [0];
-    stdin().read(&mut character).unwrap();
-    let mut char: char = character[0] as char;
-
-    while char != '"' {
-        chars.push(char);
-        stdin().read(&mut character).unwrap();
-        char = character[0] as char;
+    return loop {
+        match next_char() {
+            Some (c) => {
+                match c {
+                    '"' => {
+                        break ScmObject::new_chars(chars);  
+                    }
+                    _ => {
+                        chars.push(c);
+                    }
+                }
+            }
+            None => {
+                break ScmObject::new_error(String::from("Error in read chars"));
+            }
+        }
     }
-    stdin().read(&mut character).unwrap();
-    lib::ScmObject::new_chars(chars.to_string())
 }
 
-fn read_bool() -> lib::ScmObject {
-    lib::ScmObject::new_bool(false)
+fn read_const() -> ScmObject {
+    match next_char() {
+        Some (character) => {
+            match character {
+                'T' => {
+                    return ScmObject::new_bool(true);
+                }
+                'F' => {
+                    return ScmObject::new_bool(false);
+                }
+                'N' => {
+                    return ScmObject::new_null();
+                }
+                _ => {
+                    let mut err: String = String::from("Const is not implementet: ");
+                    err.push(character);
+                    return ScmObject::new_error(err);
+                }
+            }
+        }
+        None => {
+            return ScmObject::new_error(String::from("Error in Reader"));
+        }
+    }
 }
 
 fn skip_line () {
@@ -93,10 +140,3 @@ fn is_number(character: char) -> bool {
     }
     false
 }
-
-// fn is_charackter(character: char) -> bool {
-//     if character <= 'a' && character >= 'z' || character <= 'A' && character >= 'Z' {
-//         return true;
-//     }
-//     false
-// }

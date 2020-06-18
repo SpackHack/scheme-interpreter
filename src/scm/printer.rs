@@ -1,16 +1,22 @@
-use super::lib;
+use super::lib::{ScmObject, Value as Type};
 
-pub fn print(input: lib::ScmObject) {
+pub fn print(input: ScmObject) {
     print!(">");
     match input.value {
-        lib::Value::Error (error) => {
+        Type::Error (error) => {
             println!("{}", error);
         }
-        lib::Value::Number (numbers) => {
+        Type::Number (numbers) => {
             println!("{}", numbers);
         }
-        lib::Value::Chars (chars) => {
+        Type::Chars (chars) => {
             println!("{}", chars);
+        }
+        Type::Bool (bool) => {
+            println!("{}", bool);
+        }
+        Type::None => {
+            println!("NULL");
         }
         _ => {
             println!("Not implementet")
