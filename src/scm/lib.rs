@@ -8,6 +8,9 @@ pub enum Value {
     Chars(String),
     Bool(bool),
     None,
+    Cons(Cons),
+    Eof,
+    Nil,
 }
 
 impl ScmObject {
@@ -36,8 +39,32 @@ impl ScmObject {
     }
 
     pub fn new_null() -> Self {
+        ScmObject { value: Value::None }
+    }
+
+    pub fn new_cons(new_car: ScmObject, new_cdr: ScmObject) -> Self {
         ScmObject {
-            value: Value::None,
+            value: Value::Cons(Cons {
+                car: Box::new(new_car),
+                cdr: Box::new(new_cdr),
+            }),
         }
     }
+
+    pub fn new_eof() -> Self {
+        ScmObject {
+            value: Value::Eof,
+        }
+    }
+
+    pub fn new_nil() -> Self {
+        ScmObject {
+            value: Value::Nil,
+        }
+    }
+}
+
+pub struct Cons {
+    pub car: Box<ScmObject>,
+    pub cdr: Box<ScmObject>,
 }

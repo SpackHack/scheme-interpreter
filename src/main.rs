@@ -2,16 +2,8 @@ mod scm;
 
 fn main() {
     loop {
-        let _input: Option<scm::lib::ScmObject> = scm::reader::read();
-        match _input { 
-            Some (x) => {
-                let _val: scm::lib::ScmObject = scm::eval::eval(x);
-                scm::printer::print(_val);
-            }
-            None => {
-                continue;
-            }
-        }
-        
+        let input: scm::lib::ScmObject = scm::reader::read();
+        let val: scm::lib::ScmObject = scm::eval::eval(input);
+        scm::printer::print_result(val);
     }
 }

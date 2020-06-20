@@ -1,23 +1,46 @@
-use super::lib::{ScmObject, Value as Type};
+use super::lib::{Cons, ScmObject, Value as Type};
 
-pub fn print(input: ScmObject) {
-    print!(">");
+pub fn print_result(input: ScmObject) {
+    print!("> ");
+    print(input);
+    println!();
+}
+
+fn print(input: ScmObject) {
     match input.value {
         Type::Error(error) => {
-            println!("{}", error);
+            print!("{}", error);
         }
         Type::Number(numbers) => {
-            println!("{}", numbers);
+            print!("{}", numbers);
         }
         Type::Chars(chars) => {
-            println!("{}", chars);
+            print!("{}", chars);
         }
         Type::Bool(bool) => {
-            println!("{}", bool);
+            print!("{}", bool);
         }
         Type::None => {
-            println!("NULL");
+            print!("NULL");
+        }
+        Type::Cons(cons) => {
+            print_list(cons);
         }
         _ => println!("Not implementet"),
+    }
+}
+
+fn print_list(list: Cons) {
+    print(*list.car);
+
+    let cdr: ScmObject = *list.cdr;
+
+    match cdr.value {
+        Type::Nil => {
+            println!();
+        }
+        _ => {
+            print(cdr);
+        }
     }
 }
