@@ -141,51 +141,69 @@ fn read_list(stream: &mut ScmStream) -> ScmObject {
 }
 
 fn read_symbol(stream: &mut ScmStream) -> ScmObject {
+    let mut symbole: String = String::from("");
 
     match get_char(stream) {
         Some(c) => match c {
             '#' => {
                 // read tags
-                return ScmObject::new_error(String::from("not implemented"));
+                return read_has(stream);
             }
             _ => {
-
+                symbole.push(c);
             }
         }
         None => {
 
         }
     }
-
-
     loop {
         match get_char(stream) {
             Some(c) => match c {
                 ' ' => {
-                    return ScmObject::new_nil();
+                    // end 
+                    return ScmObject::new_symbol(symbole);
+                }
+                ';' => {
+                    unread(stream, c);
+                    return ScmObject::new_symbol(symbole);
+                }
+                '\n' => {
+                    unread(stream, c);
+                    return ScmObject::new_symbol(symbole);
                 }
                 _ => {
-                
+                    symbole.push(c);
                 }
             }
             None => {}
         }
     }
+}
 
-    // match option_c {
-    //     Some(c) => match c {
-    //         ';' => {}
-    //         '#' => {
-    //             return ScmObject::new_error(String::from("not implemented"));
-    //         }
-    //         _ => {
-    //             return ScmObject::new_error(String::from("not implemented"));
-    //         }
-    //     },
-    //     None => {
-    //         return ScmObject::new_error(String::from("Error in read symbole"));
-    //     }
-    // }
+fn read_has(stream: &mut ScmStream) -> ScmObject {
+    match get_char(stream) {
+        Some(c) => match c {
+            'T' | 't' => {
+                // end 
+                return ScmObject::new_true();
+            }
+            'F' | 'f' => {
+                // end 
+                return ScmObject::new_false();
+            }
+            'N' | 'n' => {
+                // end 
+                return ScmObject::new_null();
+            }
+            _ => {
+                return ScmObject::new_error(String::from("Error in has"))
+            }
+        }
+        None => {
+            return ScmObject::new_error(String::from("Error in read has"));
+        }
+    }
 }
 
 fn skip_whitespace(stream: &mut ScmStream) -> char {

@@ -15,7 +15,10 @@
 	"extensions": [
 		"rust-lang.rust",
 		"bungcip.better-toml",
-		"vadimcn.vscode-lldb"
+		"vadimcn.vscode-lldb",
+		"gruntfuggly.todo-tree",
+		"esbenp.prettier-vscode",
+		"davidanson.vscode-markdownlint",
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

@@ -11,17 +11,31 @@ pub fn print_result(input: ScmObject) {
 
 fn print(input: ScmObject) {
     match input.value {
-        Type::Error(error) => {
+        Type::ERROR(error) => {
             print!("{}", error);
         }
-        Type::Number(numbers) => {
+        Type::NUMBER(numbers) => {
             print!("{}", numbers);
         }
-        Type::Chars(chars) => {
+        Type::STRING(chars) => {
             print!("{}", chars);
         }
-        Type::Cons(cons) => {
+        Type::CONS(cons) => {
+            print!("(");
             print_list(cons);
+            print!(")");
+        }
+        Type::SYMBOL(symbole) => {
+            print!("{}", symbole);
+        }
+        Type::TRUE => {
+            print!("#T");
+        }
+        Type::FALSE => {
+            print!("#F");
+        }
+        Type::NULL => {
+            print!("#N");
         }
         _ => println!("Not implementet"),
     }
@@ -33,11 +47,11 @@ fn print_list(list: Cons) {
     let cdr: ScmObject = *list.cdr;
 
     match cdr.value {
-        Type::Nil => {
+        Type::NIL => {
 
         }
         _ => {
-            print!(" ");
+            print!(" . ");
             print(cdr);
         }
     }

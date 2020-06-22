@@ -7,36 +7,39 @@ pub struct ScmObject {
 }
 
 pub enum Value {
-    Error(String),
-    Number(i64),
-    Chars(String),
-    Cons(Cons),
-    Nil,
+    ERROR(String),
+    NUMBER(i64),
+    STRING(String),
+    CONS(Cons),
+    NIL,
     SYMBOL(String),
+    TRUE,
+    FALSE,
+    NULL,
 }
 
 impl ScmObject {
     pub fn new_error(chars: String) -> Self {
         ScmObject {
-            value: Value::Error(chars),
+            value: Value::ERROR(chars),
         }
     }
 
     pub fn new_number(number: i64) -> Self {
         ScmObject {
-            value: Value::Number(number),
+            value: Value::NUMBER(number),
         }
     }
 
     pub fn new_chars(string: String) -> Self {
         ScmObject {
-            value: Value::Chars(string),
+            value: Value::STRING(string),
         }
     }
 
     pub fn new_cons(new_car: ScmObject, new_cdr: ScmObject) -> Self {
         ScmObject {
-            value: Value::Cons(Cons {
+            value: Value::CONS(Cons {
                 car: Box::new(new_car),
                 cdr: Box::new(new_cdr),
             }),
@@ -45,13 +48,31 @@ impl ScmObject {
 
     pub fn new_nil() -> Self {
         ScmObject {
-            value: Value::Nil,
+            value: Value::NIL,
         }
     }
 
     pub fn new_symbol(symbole: String) -> Self {
         ScmObject {
             value: Value::SYMBOL(symbole),
+        }
+    }
+
+    pub fn new_true() -> Self {
+        ScmObject {
+            value: Value::TRUE,
+        }
+    }
+
+    pub fn new_false() -> Self {
+        ScmObject {
+            value: Value::FALSE,
+        }
+    }
+
+    pub fn new_null() -> Self {
+        ScmObject {
+            value: Value::NULL,
         }
     }
 }
@@ -79,7 +100,6 @@ impl ScmStream {
         }
     }
 
-    // TODO:
     pub fn new_stdin() -> Self {
         ScmStream {
             stream: Stream::STDIN(stdin()),
