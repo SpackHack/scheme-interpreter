@@ -1,11 +1,29 @@
-use super::lib::ScmObject;
-use std::io::{stdin, Read};
+use super::lib::{ScmObject, ScmStream, Stream as s};
+use std::io::Read;
 
-fn next_char() -> Option<char> {
-    let mut character = [0];
-    match stdin().lock().read(&mut character) {
-        Ok(_n) => {
-            return Some(character[0] as char);
+fn get_char(mut scms: &mut ScmStream) -> Option<char> {
+    let mut buf = [0];
+    let result;
+    let returnchar: char;
+
+    if scms.readchar != '\0' {
+        returnchar = scms.readchar;
+        scms.readchar = '\0';
+        return Some(returnchar);
+    }
+
+    match &mut scms.stream {
+        s::FILE(f) => {
+            result = f.read(&mut buf);
+        }
+        s::STDIN(a) => {
+            result = a.read(&mut buf);
+        }
+    }
+
+    match result {
+        Ok(_o) => {
+            return Some(buf[0] as char);
         }
         Err(e) => {
             eprintln!("Read Error: {}", e);
@@ -14,45 +32,58 @@ fn next_char() -> Option<char> {
     }
 }
 
-pub fn read() -> ScmObject {
+fn unread(stream: &mut ScmStream, c: char) {
+    if stream.readchar != '\0' {
+        eprintln!("Error unread second time");
+    } else {
+        stream.readchar = c;
+    }
+}
+
+pub fn read(mut stream: &mut ScmStream) -> ScmObject {
     let mut again: bool = true;
-    let mut c: char = skip_whitespace();
+    let mut c: char = skip_whitespace(stream);
     while again {
         if c == ';' {
-            skip_line();
-            c = skip_whitespace();
+            skip_line(stream);
+            c = skip_whitespace(stream);
         } else {
             again = false;
         }
     }
 
     if is_number(c) || c == '-' {
-        return read_number(c);
+        unread(&mut stream, c);
+        return read_number(stream);
     }
     if c == '"' {
-        return read_chars();
+        return read_chars(stream);
     }
     if c == '(' {
-        return read_list();
+        return read_list(stream);
     }
 
-    // read symbol
-
-    println!("ERR {} : {}", c, c as i64);
-    return ScmObject::new_error("Error in Reader".to_string());
+    unread(&mut stream, c);
+    return read_symbol(stream);
 }
 
-// cut char after number
 // if number to big rust panic
-fn read_number(firstchar: char) -> ScmObject {
+fn read_number(stream: &mut ScmStream) -> ScmObject {
     let mut number: i64 = 0;
     let mut is_negativ: bool = true;
-    if firstchar != '-' {
-        is_negativ = false;
-        number = firstchar as i64 - '0' as i64;
+
+    match get_char(stream) {
+        Some(c) => {
+            if c != '-' {
+                is_negativ = false;
+                number = c as i64 - '0' as i64;
+            }
+        }
+        None => {}
     }
+
     return loop {
-        match next_char() {
+        match get_char(stream) {
             Some(c) => {
                 if is_number(c) {
                     number = number * 10;
@@ -61,6 +92,7 @@ fn read_number(firstchar: char) -> ScmObject {
                     if is_negativ {
                         number = number * -1;
                     }
+                    unread(stream, c);
                     break ScmObject::new_number(number);
                 }
             }
@@ -72,10 +104,10 @@ fn read_number(firstchar: char) -> ScmObject {
 }
 
 // Endlosschleife wenn string nicht beendet
-fn read_chars() -> ScmObject {
+fn read_chars(stream: &mut ScmStream) -> ScmObject {
     let mut chars = String::new();
     return loop {
-        match next_char() {
+        match get_char(stream) {
             Some(c) => match c {
                 '"' => {
                     break ScmObject::new_chars(chars);
@@ -91,70 +123,74 @@ fn read_chars() -> ScmObject {
     };
 }
 
-// cut char after const
-fn read_const() -> ScmObject {
-    match next_char() {
-        Some(character) => match character {
-            'T' => {
-                return ScmObject::new_bool(true);
-            }
-            'F' => {
-                return ScmObject::new_bool(false);
-            }
-            'N' => {
-                return ScmObject::new_null();
-            }
-            _ => {
-                let mut err: String = String::from("Const is not implementet: ");
-                err.push(character);
-                return ScmObject::new_error(err);
-            }
-        },
-        None => {
-            return ScmObject::new_error(String::from("Error in Reader"));
-        }
-    }
-}
-
-fn read_list() -> ScmObject {
-    
-    let c: char = skip_whitespace();
+// Endlosschleife wenn list nicht beendet
+fn read_list(stream: &mut ScmStream) -> ScmObject {
+    let c: char = skip_whitespace(stream);
 
     if c == ')' {
-        return ScmObject::new_nil()
+        return ScmObject::new_nil();
     }
-    // End of file 
+    // End of file
 
+    unread(stream, c);
 
-
-    let element: ScmObject = read();
-    let restlist: ScmObject = read_list();
+    let element: ScmObject = read(stream);
+    let restlist: ScmObject = read_list(stream);
 
     return ScmObject::new_cons(element, restlist);
 }
 
-// fn read_symbol() -> ScmObject {
+fn read_symbol(stream: &mut ScmStream) -> ScmObject {
 
-// }
+    match get_char(stream) {
+        Some(c) => match c {
+            '#' => {
+                // read tags
+                return ScmObject::new_error(String::from("not implemented"));
+            }
+            _ => {
 
-// fn read_list() -> ScmObject {
-//     loop {
-//         match read() {
-//             Some (scm) => {
-//                 if scm.value == Value::EOL {
-//                     break ScmObject::new_cons(new_car: ScmObject, new_cdr: ScmObject);
-//                 }
-//             }
-//             None => {
+            }
+        }
+        None => {
 
-//             }
-//         }
-//     }
-// }
+        }
+    }
 
-fn skip_whitespace() -> char {
+
     loop {
-        match next_char() {
+        match get_char(stream) {
+            Some(c) => match c {
+                ' ' => {
+                    return ScmObject::new_nil();
+                }
+                _ => {
+                
+                }
+            }
+            None => {}
+        }
+    }
+
+    // match option_c {
+    //     Some(c) => match c {
+    //         ';' => {}
+    //         '#' => {
+    //             return ScmObject::new_error(String::from("not implemented"));
+    //         }
+    //         _ => {
+    //             return ScmObject::new_error(String::from("not implemented"));
+    //         }
+    //     },
+    //     None => {
+    //         return ScmObject::new_error(String::from("Error in read symbole"));
+    //     }
+    // }
+}
+
+fn skip_whitespace(stream: &mut ScmStream) -> char {
+    loop {
+        match get_char(stream) {
             Some(c) => {
                 if !is_whitespace(c) {
                     break c;
@@ -165,9 +201,9 @@ fn skip_whitespace() -> char {
     }
 }
 
-fn skip_line() -> char {
+fn skip_line(stream: &mut ScmStream) -> char {
     return loop {
-        match next_char() {
+        match get_char(stream) {
             Some(c) => {
                 if c == '\n' {
                     break c;

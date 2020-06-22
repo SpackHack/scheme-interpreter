@@ -1,6 +1,9 @@
 use super::lib::{Cons, ScmObject, Value as Type};
+use std::io;
+use std::io::Write;
 
 pub fn print_result(input: ScmObject) {
+    io::stdout().flush().unwrap();
     print!("> ");
     print(input);
     println!();
@@ -17,12 +20,6 @@ fn print(input: ScmObject) {
         Type::Chars(chars) => {
             print!("{}", chars);
         }
-        Type::Bool(bool) => {
-            print!("{}", bool);
-        }
-        Type::None => {
-            print!("NULL");
-        }
         Type::Cons(cons) => {
             print_list(cons);
         }
@@ -37,9 +34,10 @@ fn print_list(list: Cons) {
 
     match cdr.value {
         Type::Nil => {
-            println!();
+
         }
         _ => {
+            print!(" ");
             print(cdr);
         }
     }

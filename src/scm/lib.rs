@@ -1,3 +1,7 @@
+use std::io::{Stdin, stdin};
+use std::fs::File;
+
+
 pub struct ScmObject {
     pub value: Value,
 }
@@ -6,11 +10,9 @@ pub enum Value {
     Error(String),
     Number(i64),
     Chars(String),
-    Bool(bool),
-    None,
     Cons(Cons),
-    Eof,
     Nil,
+    SYMBOL(String),
 }
 
 impl ScmObject {
@@ -32,16 +34,6 @@ impl ScmObject {
         }
     }
 
-    pub fn new_bool(bool_value: bool) -> Self {
-        ScmObject {
-            value: Value::Bool(bool_value),
-        }
-    }
-
-    pub fn new_null() -> Self {
-        ScmObject { value: Value::None }
-    }
-
     pub fn new_cons(new_car: ScmObject, new_cdr: ScmObject) -> Self {
         ScmObject {
             value: Value::Cons(Cons {
@@ -51,15 +43,15 @@ impl ScmObject {
         }
     }
 
-    pub fn new_eof() -> Self {
-        ScmObject {
-            value: Value::Eof,
-        }
-    }
-
     pub fn new_nil() -> Self {
         ScmObject {
             value: Value::Nil,
+        }
+    }
+
+    pub fn new_symbol(symbole: String) -> Self {
+        ScmObject {
+            value: Value::SYMBOL(symbole),
         }
     }
 }
@@ -67,4 +59,31 @@ impl ScmObject {
 pub struct Cons {
     pub car: Box<ScmObject>,
     pub cdr: Box<ScmObject>,
+}
+
+pub struct ScmStream {
+    pub stream: Stream,
+    pub readchar: char,
+}
+
+pub enum Stream {
+    FILE(File),
+    STDIN(Stdin),
+}
+
+impl ScmStream {
+    pub fn new_file(file: File) -> Self {
+        ScmStream {
+            stream: Stream::FILE(file),
+            readchar: '\0',
+        }
+    }
+
+    // TODO:
+    pub fn new_stdin() -> Self {
+        ScmStream {
+            stream: Stream::STDIN(stdin()),
+            readchar: '\0',
+        }
+    }
 }
