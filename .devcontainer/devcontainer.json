@@ -19,6 +19,7 @@
 		"gruntfuggly.todo-tree",
 		"esbenp.prettier-vscode",
 		"davidanson.vscode-markdownlint",
+		"matklad.rust-analyzer",
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

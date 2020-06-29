@@ -1,4 +1,5 @@
 use super::lib::{ScmObject, ScmStream, Stream as s};
+use super::memory::new_symbole;
 use std::io::Read;
 
 fn get_char(mut scms: &mut ScmStream) -> Option<char> {
@@ -43,6 +44,7 @@ fn unread(stream: &mut ScmStream, c: char) {
 pub fn read(mut stream: &mut ScmStream) -> ScmObject {
     let mut again: bool = true;
     let mut c: char = skip_whitespace(stream);
+
     while again {
         if c == ';' {
             skip_line(stream);
@@ -61,6 +63,9 @@ pub fn read(mut stream: &mut ScmStream) -> ScmObject {
     }
     if c == '(' {
         return read_list(stream);
+    }
+    if c as i64 == 0 {
+        return ScmObject::new_eof();
     }
 
     unread(&mut stream, c);
@@ -147,22 +152,21 @@ fn read_symbol(stream: &mut ScmStream) -> ScmObject {
         Some(c) => match c {
             '#' => {
                 // read tags
-                return read_has(stream);
+                return read_hash(stream);
             }
             _ => {
                 symbole.push(c);
             }
-        }
-        None => {
-
-        }
+        },
+        None => {}
     }
     loop {
         match get_char(stream) {
             Some(c) => match c {
                 ' ' => {
-                    // end 
-                    return ScmObject::new_symbol(symbole);
+                    // end
+                    return unsafe { new_symbole(symbole) };
+                    //return ScmObject::new_symbol(symbole);
                 }
                 ';' => {
                     unread(stream, c);
@@ -172,34 +176,36 @@ fn read_symbol(stream: &mut ScmStream) -> ScmObject {
                     unread(stream, c);
                     return ScmObject::new_symbol(symbole);
                 }
+                ')' => {
+                    unread(stream, c);
+                    return ScmObject::new_symbol(symbole);
+                }
                 _ => {
                     symbole.push(c);
                 }
-            }
+            },
             None => {}
         }
     }
 }
 
-fn read_has(stream: &mut ScmStream) -> ScmObject {
+fn read_hash(stream: &mut ScmStream) -> ScmObject {
     match get_char(stream) {
         Some(c) => match c {
             'T' | 't' => {
-                // end 
+                // end
                 return ScmObject::new_true();
             }
             'F' | 'f' => {
-                // end 
+                // end
                 return ScmObject::new_false();
             }
             'N' | 'n' => {
-                // end 
+                // end
                 return ScmObject::new_null();
             }
-            _ => {
-                return ScmObject::new_error(String::from("Error in has"))
-            }
-        }
+            _ => return ScmObject::new_error(String::from("Error in hash")),
+        },
         None => {
             return ScmObject::new_error(String::from("Error in read has"));
         }

@@ -1,9 +1,11 @@
 mod scm;
+use scm::selftest::selftest;
 use std::env;
 use std::fs::File;
 
 fn main() {
-
+    selftest();
+    let mut init: bool = true;
     // unsafe {scm::memory::init_singeltons()};
 
     // unsafe {scm::memory::new_symbole(String::from("symbole: String"))};
@@ -14,23 +16,43 @@ fn main() {
     for (i, arg) in args.iter().enumerate() {
         if arg == "-f" {
             match File::open(args.get(i + 1).unwrap()) {
-                Ok (file)=> {
+                Ok(file) => {
                     input_stream = scm::lib::ScmStream::new_file(file);
                 }
-                Err (e) => {
+                Err(e) => {
                     eprintln!("ERROR: {}", e);
-
                 }
             }
         }
+
+        if arg == "-i" {
+            init = false;
+        }
     }
 
-    loop {
-        let mut input: scm::lib::ScmObject = scm::reader::read(&mut input_stream);
-        // let val: scm::lib::ScmObject = scm::eval::eval(&mut input);
-        // scm::printer::print_result(val);
+    if init {
+        match File::open("./init.scm") {
+            Ok(file) => {
+                input_stream = scm::lib::ScmStream::new_file(file);
+                run(input_stream);
+            }
+            Err(err) => {
+                println!("ERR in read init: {}", err);
+            }
+        }
+        input_stream = scm::lib::ScmStream::new_stdin();
+    }
+    run(input_stream);
+}
 
-        scm::eval::eval(&mut input);
-        scm::printer::print_result(input);
+fn run(mut stream: scm::lib::ScmStream) {
+    loop {
+        let input: scm::lib::ScmObject = scm::reader::read(&mut stream);
+        
+        if let scm::lib::ObjectType::EOF = input.value {
+            break;
+        }
+        let result = scm::eval::eval(input);
+        scm::printer::print_result(result);
     }
 }

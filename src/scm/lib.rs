@@ -1,12 +1,13 @@
 use std::io::{Stdin, stdin};
 use std::fs::File;
 
-
+#[derive(Clone)]
 pub struct ScmObject {
-    pub value: Value,
+    pub value: ObjectType,
 }
 
-pub enum Value {
+#[derive(Clone)]
+pub enum ObjectType {
     ERROR(String),
     NUMBER(i64),
     STRING(String),
@@ -16,30 +17,55 @@ pub enum Value {
     TRUE,
     FALSE,
     NULL,
+    FN(ScmBuildInFunction),
+    USERFN(UserFunction),
+    EOF,
+}
+
+#[derive(Clone)]
+pub enum BuildInFunction {
+    Quote,
+    FnPlus,
+}
+
+#[derive(Clone)]
+pub struct ScmBuildInFunction {
+    pub tag: BuildInFunction,
+    pub name: String,
+    pub numArgs: i64,
+}
+
+#[derive(Clone)]
+pub struct UserFunction {
+    pub name: String,
+    pub numArgs: i64,
+    pub argList: Box<ScmObject>,
+    pub bodyList: Box<ScmObject>,
+    pub homeEnvironment: Box<ScmObject>,
 }
 
 impl ScmObject {
     pub fn new_error(chars: String) -> Self {
         ScmObject {
-            value: Value::ERROR(chars),
+            value: ObjectType::ERROR(chars),
         }
     }
 
     pub fn new_number(number: i64) -> Self {
         ScmObject {
-            value: Value::NUMBER(number),
+            value: ObjectType::NUMBER(number),
         }
     }
 
     pub fn new_chars(string: String) -> Self {
         ScmObject {
-            value: Value::STRING(string),
+            value: ObjectType::STRING(string),
         }
     }
 
     pub fn new_cons(new_car: ScmObject, new_cdr: ScmObject) -> Self {
         ScmObject {
-            value: Value::CONS(Cons {
+            value: ObjectType::CONS(Cons {
                 car: Box::new(new_car),
                 cdr: Box::new(new_cdr),
             }),
@@ -48,35 +74,42 @@ impl ScmObject {
 
     pub fn new_nil() -> Self {
         ScmObject {
-            value: Value::NIL,
+            value: ObjectType::NIL,
         }
     }
 
     pub fn new_symbol(symbole: String) -> Self {
         ScmObject {
-            value: Value::SYMBOL(symbole),
+            value: ObjectType::SYMBOL(symbole),
         }
     }
 
     pub fn new_true() -> Self {
         ScmObject {
-            value: Value::TRUE,
+            value: ObjectType::TRUE,
         }
     }
 
     pub fn new_false() -> Self {
         ScmObject {
-            value: Value::FALSE,
+            value: ObjectType::FALSE,
         }
     }
 
     pub fn new_null() -> Self {
         ScmObject {
-            value: Value::NULL,
+            value: ObjectType::NULL,
+        }
+    }
+
+    pub fn new_eof() -> Self {
+        ScmObject {
+            value: ObjectType::EOF,
         }
     }
 }
 
+#[derive(Clone)]
 pub struct Cons {
     pub car: Box<ScmObject>,
     pub cdr: Box<ScmObject>,
