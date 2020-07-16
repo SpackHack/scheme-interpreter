@@ -1,5 +1,5 @@
-use std::io::{Stdin, stdin};
 use std::fs::File;
+use std::io::{stdin, Stdin};
 
 #[derive(Clone)]
 pub struct ScmObject {
@@ -20,12 +20,13 @@ pub enum ObjectType {
     FN(ScmBuildInFunction),
     USERFN(UserFunction),
     EOF,
+    ENV(ScmEnvironment),
 }
 
 #[derive(Clone)]
-pub enum BuildInFunction {
-    Quote,
-    FnPlus,
+pub struct Cons {
+    pub car: Box<ScmObject>,
+    pub cdr: Box<ScmObject>,
 }
 
 #[derive(Clone)]
@@ -36,12 +37,36 @@ pub struct ScmBuildInFunction {
 }
 
 #[derive(Clone)]
+pub enum BuildInFunction {
+    QUOTE,
+    FNPLUS,
+    FNMINUS,
+}
+
+#[derive(Clone)]
 pub struct UserFunction {
     pub name: String,
     pub numArgs: i64,
     pub argList: Box<ScmObject>,
     pub bodyList: Box<ScmObject>,
     pub homeEnvironment: Box<ScmObject>,
+}
+
+#[derive(Clone)]
+pub struct ScmEnvironment {
+    parent_env: Box<ScmObject>,
+    bindings: Box<ScmObject>,
+    num_bindigs: i64,
+}
+
+pub struct ScmStream {
+    pub stream: Stream,
+    pub readchar: char,
+}
+
+pub enum Stream {
+    FILE(File),
+    STDIN(Stdin),
 }
 
 impl ScmObject {
@@ -107,22 +132,26 @@ impl ScmObject {
             value: ObjectType::EOF,
         }
     }
-}
 
-#[derive(Clone)]
-pub struct Cons {
-    pub car: Box<ScmObject>,
-    pub cdr: Box<ScmObject>,
-}
+    pub fn new_fn(tag: BuildInFunction, name: String, num_of_args: i64) -> Self {
+        ScmObject {
+            value: ObjectType::FN(ScmBuildInFunction {
+                tag: tag,
+                name: name,
+                numArgs: num_of_args,
+            }),
+        }
+    }
 
-pub struct ScmStream {
-    pub stream: Stream,
-    pub readchar: char,
-}
-
-pub enum Stream {
-    FILE(File),
-    STDIN(Stdin),
+    pub fn new_env(parent_env: ScmObject, bindings: ScmObject, num_bindigs: i64) -> Self{
+        ScmObject {
+            value: ObjectType::ENV(ScmEnvironment {
+                parent_env: Box::new(parent_env),
+                bindings: Box::new(bindings),
+                num_bindigs: num_bindigs,
+            }),
+        }
+    }
 }
 
 impl ScmStream {

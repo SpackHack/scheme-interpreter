@@ -57,14 +57,11 @@ pub fn read(mut stream: &mut ScmStream) -> ScmObject {
     if is_number(c) || c == '-' {
         unread(&mut stream, c);
         return read_number(stream);
-    }
-    if c == '"' {
+    } else if c == '"' {
         return read_chars(stream);
-    }
-    if c == '(' {
+    } else if c == '(' {
         return read_list(stream);
-    }
-    if c as i64 == 0 {
+    } else if c as i64 == 0 {
         return ScmObject::new_eof();
     }
 
@@ -170,15 +167,18 @@ fn read_symbol(stream: &mut ScmStream) -> ScmObject {
                 }
                 ';' => {
                     unread(stream, c);
-                    return ScmObject::new_symbol(symbole);
+                    return unsafe { new_symbole(symbole) };
+                    //return ScmObject::new_symbol(symbole);
                 }
                 '\n' => {
                     unread(stream, c);
-                    return ScmObject::new_symbol(symbole);
+                    return unsafe { new_symbole(symbole) };
+                    //return ScmObject::new_symbol(symbole);
                 }
                 ')' => {
                     unread(stream, c);
-                    return ScmObject::new_symbol(symbole);
+                    return unsafe { new_symbole(symbole) };
+                    //return ScmObject::new_symbol(symbole);
                 }
                 _ => {
                     symbole.push(c);

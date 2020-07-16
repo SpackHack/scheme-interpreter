@@ -4,7 +4,9 @@ pub fn defineEnviroment() {}
 
 pub fn setEnviroment() {}
 
-//pub fn getEnvironment() -> ScmObject {}
+pub fn getEnvironment(env: ScmObject, key: ScmObject) -> ScmObject {
+    key
+}
 
 pub fn printEvironment() {}
 
