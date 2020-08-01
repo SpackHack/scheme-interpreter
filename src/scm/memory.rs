@@ -1,4 +1,4 @@
-use super::lib::{ScmObject, ObjectType};
+use scheme_lib::{ScmObject, ObjectType};
 
 
 static mut NUMBER_OF_SYMBOLES: i64 = 0;

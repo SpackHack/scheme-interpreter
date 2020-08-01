@@ -1,4 +1,4 @@
-use super::lib::{ScmObject};
+use scheme_lib::{ScmObject};
 
 pub fn defineEnviroment() {}
 

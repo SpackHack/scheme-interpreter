@@ -1,4 +1,4 @@
-use super::lib::{ScmObject, ScmStream, Stream as s};
+use scheme_lib::{ScmObject, ScmStream, Stream as s};
 use super::memory::new_symbole;
 use std::io::Read;
 

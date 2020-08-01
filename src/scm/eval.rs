@@ -1,4 +1,4 @@
-use super::lib::{*};
+use scheme_lib::{*};
 
 pub fn eval(input: ScmObject) -> ScmObject {
     let scm = input.clone();

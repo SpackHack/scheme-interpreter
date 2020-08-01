@@ -1,4 +1,4 @@
-use super::lib::{Cons, ScmObject, ObjectType as Type};
+use scheme_lib::{Cons, ScmObject, ObjectType as Type};
 use std::io;
 use std::io::Write;
 
