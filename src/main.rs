@@ -36,7 +36,7 @@ fn main() {
     if init {
         match File::open("./init.scm") {
             Ok(file) => {
-                run(ScmStream::new_file(file), &top_env);
+                top_env = run(ScmStream::new_file(file), top_env);
             }
             Err(err) => {
                 println!("ERR in read init: {}", err);
@@ -44,30 +44,48 @@ fn main() {
         }
     }
 
-    run(input_stream, &top_env);
+    run(input_stream, top_env);
 }
 
-fn run(mut stream: ScmStream, env: &ScmObject) {
+fn run(mut stream: ScmStream, env: ScmObject) -> ScmObject{
+    let mut e = env;
     loop {
+       
         let input: ScmObject = scm::reader::read(&mut stream);
         if let ScmObject::EOF = input {
             break;
         }
-        let result = scm::eval::eval(input, &env);
-        scm::printer::print_result(result);
+        let evaluiert = scm::eval::eval(input, e);
+        e = evaluiert.1;
+        scm::printer::print_result(evaluiert.0);
     }
+    e
 }
 
-fn init_buildin(mut env: ScmObject) -> ScmObject{
+fn init_buildin(mut env: ScmObject) -> ScmObject {
+    env = scm::environment::define_enviroment(
+        env,
+        ScmObject::new_symbol(String::from("quota")),
+        ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntax Quota"), 1),
+    );
 
-    let mut fns = ScmObject::new_fn(BuildInFunction::FNPLUS, String::from("+"), 2);
-    env = scm::environment::define_enviroment(env, ScmObject::new_symbol(String::from("+")), fns);
+    env = scm::environment::define_enviroment(
+        env,
+        ScmObject::new_symbol(String::from("define")),
+        ScmObject::new_syntax(BuildInSyntax::Define, String::from("Syntax define"), 2),
+    );
 
-    fns = ScmObject::new_fn(BuildInFunction::QUOTE, String::from("'"), 1);
-    env = scm::environment::define_enviroment(env, ScmObject::new_symbol(String::from("'")), fns);
+    env = scm::environment::define_enviroment(
+        env,
+        ScmObject::new_symbol(String::from("+")),
+        ScmObject::new_fn(BuildInFunction::Plus, String::from("FN Plus"), 2),
+    );
 
-    fns = ScmObject::new_fn(BuildInFunction::FNMINUS, String::from("-"), 2);
-    env = scm::environment::define_enviroment(env, ScmObject::new_symbol(String::from("-")), fns);
+    env = scm::environment::define_enviroment(
+        env,
+        ScmObject::new_symbol(String::from("-")),
+        ScmObject::new_fn(BuildInFunction::Minus, String::from("-"), 2),
+    );
 
     env
 }

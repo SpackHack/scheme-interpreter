@@ -7,12 +7,14 @@ pub enum ScmObject {
     NUMBER(i64),
     STRING(String),
     CONS(Cons),
-    NIL,
+    NIL,            // end of list
     SYMBOL(String),
     TRUE,
     FALSE,
     NULL,
+    Void,
     FN(ScmBuildInFunction),
+    Syntax(ScmBuildInSyntax),
     USERFN(UserFunction),
     EOF,
     ENV(ScmEnvironment),
@@ -34,9 +36,25 @@ pub struct ScmBuildInFunction {
 
 #[derive(Clone)]
 pub enum BuildInFunction {
-    QUOTE,
-    FNPLUS,
-    FNMINUS,
+    Plus,
+    Minus,
+}
+
+#[derive(Clone)]
+pub struct ScmBuildInSyntax{
+    pub tag: BuildInSyntax,
+    pub name: String,
+    pub num_args: i64,
+}
+
+#[derive(Clone)]
+pub enum BuildInSyntax {
+    Quote,
+    Lambda,
+    Define,
+    If,
+    Set,
+    Begin,
 }
 
 #[derive(Clone)]
@@ -114,6 +132,14 @@ impl ScmObject {
             tag: tag,
             name: name,
             numArgs: num_of_args,
+        })
+    }
+
+    pub fn new_syntax(tag: BuildInSyntax, name: String, num_of_args: i64) -> Self {
+        ScmObject::Syntax(ScmBuildInSyntax {
+            tag: tag,
+            name: name,
+            num_args: num_of_args,
         })
     }
 

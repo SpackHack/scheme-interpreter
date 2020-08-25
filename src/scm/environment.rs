@@ -11,18 +11,18 @@ pub fn define_enviroment(env: ScmObject, key: ScmObject,  val: ScmObject) -> Scm
 
 pub fn setEnviroment() {}
 
-pub fn getEnvironment(env: &ScmObject, key: ScmObject) -> ScmObject {
+pub fn getEnvironment(env: ScmObject, key: ScmObject) -> (ScmObject, ScmObject) {
     
     if let ScmObject::ENV(e) = &env {
         for elem in &e.bindings {
             if let ScmObject::CONS(cons) = &elem {
                 if scm_equal(&key, &*cons.car){
-                    return *cons.cdr.clone();
+                    return (*cons.cdr.clone(), env);
                 }
             }
         }
     }
-    ScmObject::None
+    (ScmObject::None, env)
 }
 
 pub fn printEvironment() {}
