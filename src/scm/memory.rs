@@ -1,4 +1,4 @@
-use scheme_lib::{ScmObject, ObjectType};
+use scheme_lib::{ScmObject};
 
 
 static mut NUMBER_OF_SYMBOLES: i64 = 0;
@@ -37,8 +37,8 @@ unsafe fn add_symbole<'a>(symbole: String) -> ScmObject {
 
 unsafe fn get_existing_symbole<'a>(symbole: &String) -> Option<ScmObject> {
     for i in SYMBOLES.iter() {
-        match &i.value {
-            ObjectType::SYMBOL(s) => {
+        match &i {
+            ScmObject::SYMBOL(s) => {
                 if *s == *symbole {
                     return Some(i.clone());
                 }

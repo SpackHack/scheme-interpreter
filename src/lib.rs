@@ -2,12 +2,7 @@ use std::fs::File;
 use std::io::{stdin, Stdin};
 
 #[derive(Clone)]
-pub struct ScmObject {
-    pub value: ObjectType,
-}
-
-#[derive(Clone)]
-pub enum ObjectType {
+pub enum ScmObject {
     ERROR(String),
     NUMBER(i64),
     STRING(String),
@@ -21,6 +16,7 @@ pub enum ObjectType {
     USERFN(UserFunction),
     EOF,
     ENV(ScmEnvironment),
+    None,
 }
 
 #[derive(Clone)]
@@ -54,14 +50,14 @@ pub struct UserFunction {
 
 #[derive(Clone)]
 pub struct ScmEnvironment {
-    parent_env: Box<ScmObject>,
-    bindings: Box<ScmObject>,
-    num_bindigs: i64,
+    pub parent_env: Box<ScmObject>,
+    pub bindings: Vec<ScmObject>,
+    pub num_bindigs: i64,
 }
 
 pub struct ScmStream {
     pub stream: Stream,
-    pub readchar: char,
+    pub readchar: Vec<char>,
 }
 
 pub enum Stream {
@@ -71,86 +67,62 @@ pub enum Stream {
 
 impl ScmObject {
     pub fn new_error(chars: String) -> Self {
-        ScmObject {
-            value: ObjectType::ERROR(chars),
-        }
+        ScmObject::ERROR(chars)
     }
 
     pub fn new_number(number: i64) -> Self {
-        ScmObject {
-            value: ObjectType::NUMBER(number),
-        }
+        ScmObject::NUMBER(number)
     }
 
     pub fn new_chars(string: String) -> Self {
-        ScmObject {
-            value: ObjectType::STRING(string),
-        }
+        ScmObject::STRING(string)
     }
 
     pub fn new_cons(new_car: ScmObject, new_cdr: ScmObject) -> Self {
-        ScmObject {
-            value: ObjectType::CONS(Cons {
-                car: Box::new(new_car),
-                cdr: Box::new(new_cdr),
-            }),
-        }
+        ScmObject::CONS(Cons {
+            car: Box::new(new_car),
+            cdr: Box::new(new_cdr),
+        })
     }
 
     pub fn new_nil() -> Self {
-        ScmObject {
-            value: ObjectType::NIL,
-        }
+        ScmObject::NIL
     }
 
     pub fn new_symbol(symbole: String) -> Self {
-        ScmObject {
-            value: ObjectType::SYMBOL(symbole),
-        }
+        ScmObject::SYMBOL(symbole)
     }
 
     pub fn new_true() -> Self {
-        ScmObject {
-            value: ObjectType::TRUE,
-        }
+        ScmObject::TRUE
     }
 
     pub fn new_false() -> Self {
-        ScmObject {
-            value: ObjectType::FALSE,
-        }
+        ScmObject::FALSE
     }
 
     pub fn new_null() -> Self {
-        ScmObject {
-            value: ObjectType::NULL,
-        }
+        ScmObject::NULL
     }
 
     pub fn new_eof() -> Self {
-        ScmObject {
-            value: ObjectType::EOF,
-        }
+        ScmObject::EOF
     }
 
     pub fn new_fn(tag: BuildInFunction, name: String, num_of_args: i64) -> Self {
-        ScmObject {
-            value: ObjectType::FN(ScmBuildInFunction {
-                tag: tag,
-                name: name,
-                numArgs: num_of_args,
-            }),
-        }
+        ScmObject::FN(ScmBuildInFunction {
+            tag: tag,
+            name: name,
+            numArgs: num_of_args,
+        })
     }
 
-    pub fn new_env(parent_env: ScmObject, bindings: ScmObject, num_bindigs: i64) -> Self{
-        ScmObject {
-            value: ObjectType::ENV(ScmEnvironment {
-                parent_env: Box::new(parent_env),
-                bindings: Box::new(bindings),
-                num_bindigs: num_bindigs,
-            }),
-        }
+    pub fn new_env() -> Self {
+        ScmObject::ENV(ScmEnvironment {
+            parent_env: Box::new(ScmObject::new_null()),
+            bindings: vec![],
+            num_bindigs: 0,
+        })
     }
 }
 
@@ -158,14 +130,28 @@ impl ScmStream {
     pub fn new_file(file: File) -> Self {
         ScmStream {
             stream: Stream::FILE(file),
-            readchar: '\0',
+            readchar: vec![],
         }
     }
 
     pub fn new_stdin() -> Self {
         ScmStream {
             stream: Stream::STDIN(stdin()),
-            readchar: '\0',
+            readchar: vec![],
         }
     }
+}
+
+pub fn scm_equal(scm1: &ScmObject, scm2: &ScmObject) -> bool {
+    return match &scm1 {
+        ScmObject::SYMBOL(symbole) => {
+            if let ScmObject::SYMBOL(s) = &scm2 {
+                if symbole == s {
+                    return true;
+                }
+            }
+            false
+        }
+        _ => false,
+    };
 }

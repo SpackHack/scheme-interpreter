@@ -1,6 +1,6 @@
 (dasda 3123 213)
-123; hallo
+123; halloweruz
 "hallo"
-(' 123)
-(+ 1 2)
-(minus 1 1)
+(' 123); FN Quote
+(+ 1 2); FN Plus
+(- 1 1); FN Minus

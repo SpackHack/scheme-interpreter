@@ -1,4 +1,4 @@
-use scheme_lib::{Cons, ScmObject, ObjectType as Type};
+use scheme_lib::{Cons, ScmObject, ScmObject as Type};
 use std::io;
 use std::io::Write;
 
@@ -10,7 +10,7 @@ pub fn print_result(input: ScmObject) {
 }
 
 fn print(input: ScmObject) {
-    match input.value {
+    match input {
         Type::ERROR(error) => {
             print!("{}", error);
         }
@@ -37,7 +37,7 @@ fn print(input: ScmObject) {
         Type::NULL => {
             print!("#N");
         }
-        _ => println!("Not implementet"),
+        _ => println!("Print Not implementet"),
     }
 }
 
@@ -46,7 +46,7 @@ fn print_list(list: Cons) {
 
     let cdr: ScmObject = *list.cdr;
 
-    match cdr.value {
+    match cdr {
         Type::NIL => {
 
         }

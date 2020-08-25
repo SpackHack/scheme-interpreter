@@ -13,6 +13,16 @@
       "cwd": "${workspaceRoot}",
       "sourceLanguages": ["rust"],
       "preLaunchTask": "cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug with Init",
+      "program": "${workspaceRoot}/target/debug/scheme",
+      "args": ["-i"],
+      "cwd": "${workspaceRoot}",
+      "sourceLanguages": ["rust"],
+      "preLaunchTask": "cargo build"
     }
   ]
 }
