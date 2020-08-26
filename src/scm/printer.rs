@@ -1,43 +1,50 @@
-use scheme_lib::{Cons, ScmObject, ScmObject as Type};
+use super::scmObject::{Cons, ScmObject};
 use std::io;
 use std::io::Write;
 
 pub fn print_result(input: ScmObject) {
-    io::stdout().flush().unwrap();
-    print!("> ");
-    print(input);
-    println!();
+
+    match input {
+        ScmObject::None => {},
+        ScmObject::Void => {},
+        _ => {
+            io::stdout().flush().unwrap();
+            print!("> ");
+            print(input);
+            println!();
+        }
+    }
 }
 
 fn print(input: ScmObject) {
     match input {
-        Type::ERROR(error) => {
+        ScmObject::ERROR(error) => {
             print!("{}", error);
         }
-        Type::NUMBER(numbers) => {
+        ScmObject::NUMBER(numbers) => {
             print!("{}", numbers);
         }
-        Type::STRING(chars) => {
+        ScmObject::STRING(chars) => {
             print!("{}", chars);
         }
-        Type::CONS(cons) => {
+        ScmObject::CONS(cons) => {
             print!("(");
             print_list(cons);
             print!(")");
         }
-        Type::SYMBOL(symbole) => {
+        ScmObject::SYMBOL(symbole) => {
             print!("{}", symbole);
         }
-        Type::TRUE => {
+        ScmObject::TRUE => {
             print!("#T");
         }
-        Type::FALSE => {
+        ScmObject::FALSE => {
             print!("#F");
         }
-        Type::NULL => {
+        ScmObject::NULL => {
             print!("#N");
         }
-        _ => println!("Print Not implementet"),
+        _ => println!("Print Not implemented"),
     }
 }
 
@@ -47,9 +54,7 @@ fn print_list(list: Cons) {
     let cdr: ScmObject = *list.cdr;
 
     match cdr {
-        Type::NIL => {
-
-        }
+        ScmObject::NIL => {}
         _ => {
             print!(" . ");
             print(cdr);

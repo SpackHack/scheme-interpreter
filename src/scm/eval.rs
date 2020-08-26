@@ -1,68 +1,65 @@
-use scheme_lib::*;
+use super::environment::*;
+use super::scmObject::*;
 
-pub fn eval(input: ScmObject, env: ScmObject) -> (ScmObject, ScmObject) {
+pub fn eval(input: ScmObject, mut env: &mut ScmEnvironment) -> ScmObject {
     let a = input.clone();
     match input {
         ScmObject::CONS(cons) => {
             let func = *cons.car;
-            let (eval_func, env) = eval(func, env);
+            let eval_func = eval(func, env);
 
             match eval_func {
                 ScmObject::FN(function) => build_in_functions(function, *cons.cdr, env),
-                ScmObject::Syntax(syntax) => build_in_syntax(syntax, *cons.cdr, env),
-                ScmObject::USERFN(function) => {
-                    (ScmObject::new_error(String::from("User FN ")), env)
-                }
-                _ => (ScmObject::new_error(String::from("not a func")), env),
+                ScmObject::Syntax(syntax) => build_in_syntax(syntax, *cons.cdr, &mut env),
+                ScmObject::USERFN(function) => ScmObject::ERROR(String::from("User FN ")),
+                _ => ScmObject::ERROR(String::from("not a func")),
             }
         }
-        ScmObject::SYMBOL(symbole) => super::environment::getEnvironment(env, a),
-        _ => (input, env),
+        ScmObject::SYMBOL(symbole) => {
+            let result = env.get(a);
+            if let ScmObject::None = result {
+                return ScmObject::ERROR(String::from("Symbole not found"));
+            } else {
+                return result;
+            }
+        }
+        _ => input,
     }
 }
 
 fn build_in_functions(
     function: ScmBuildInFunction,
-    argslist: ScmObject,
-    env: ScmObject,
-) -> (ScmObject, ScmObject) {
+    args_list: ScmObject,
+    env: &ScmEnvironment,
+) -> ScmObject {
     let mut arg_count: i64 = 1;
 
     match function.tag {
         BuildInFunction::Plus => {
-            if let ScmObject::CONS(cons) = argslist {
+            if let ScmObject::CONS(cons) = args_list {
                 let mut arg = *cons.car;
                 let mut restlist = *cons.cdr;
                 let mut sum: i64 = 0;
 
-                while arg_count <= function.numArgs {
+                while arg_count <= function.num_args {
                     if let ScmObject::NIL = restlist {
-                        if arg_count != function.numArgs {
-                            return (
-                                ScmObject::new_error(String::from(
-                                    "Plus have not the right number of args",
-                                )),
-                                env,
-                            );
+                        if arg_count != function.num_args {
+                            return ScmObject::ERROR(String::from(
+                                "Plus have not the right number of args",
+                            ));
                         }
                     } else {
-                        if arg_count == function.numArgs {
-                            return (
-                                ScmObject::new_error(String::from(
-                                    "Plus have not the right number of args",
-                                )),
-                                env,
-                            );
+                        if arg_count == function.num_args {
+                            return ScmObject::ERROR(String::from(
+                                "Plus have not the right number of args",
+                            ));
                         }
                     }
 
                     if let ScmObject::NUMBER(number) = arg {
                         sum = sum + number;
                     } else {
-                        return (
-                            ScmObject::new_error(String::from("arg is not a number")),
-                            env,
-                        );
+                        return ScmObject::ERROR(String::from("arg is not a number"));
                     }
 
                     arg_count = arg_count + 1;
@@ -71,32 +68,26 @@ fn build_in_functions(
                         restlist = *cons.cdr;
                     }
                 }
-                return (ScmObject::new_number(sum), env);
+                return ScmObject::NUMBER(sum);
             }
         }
         BuildInFunction::Minus => {
-            if let ScmObject::CONS(cons) = argslist {
+            if let ScmObject::CONS(cons) = args_list {
                 let mut arg = cons.car;
                 let mut restlist = cons.cdr;
                 let mut result: i64 = 0;
-                while arg_count <= function.numArgs {
+                while arg_count <= function.num_args {
                     if let ScmObject::NIL = *restlist {
-                        if arg_count != function.numArgs {
-                            return (
-                                ScmObject::new_error(String::from(
-                                    "Minus have not the right number of args",
-                                )),
-                                env,
-                            );
+                        if arg_count != function.num_args {
+                            return ScmObject::ERROR(String::from(
+                                "Minus have not the right number of args",
+                            ));
                         }
                     } else {
-                        if arg_count == function.numArgs {
-                            return (
-                                ScmObject::new_error(String::from(
-                                    "Minus have not the right number of args",
-                                )),
-                                env,
-                            );
+                        if arg_count == function.num_args {
+                            return ScmObject::ERROR(String::from(
+                                "Minus have not the right number of args",
+                            ));
                         }
                     }
 
@@ -107,10 +98,7 @@ fn build_in_functions(
                             result = result - number;
                         }
                     } else {
-                        return (
-                            ScmObject::new_error(String::from("arg is not a number")),
-                            env,
-                        );
+                        return ScmObject::ERROR(String::from("arg is not a number"));
                     }
 
                     arg_count = arg_count + 1;
@@ -119,81 +107,60 @@ fn build_in_functions(
                         restlist = cons.cdr;
                     }
                 }
-                return (ScmObject::new_number(result), env);
+                return ScmObject::NUMBER(result);
             }
         }
         _ => {
-            return (
-                ScmObject::new_error(String::from("Func not implement")),
-                env,
-            );
+            return ScmObject::ERROR(String::from("Func not implement"));
         }
     }
-    return (
-        ScmObject::new_error(String::from("error in build in func")),
-        env,
-    );
+    return ScmObject::ERROR(String::from("error in build in func"));
 }
 
 fn build_in_syntax(
     syntax: ScmBuildInSyntax,
-    argslist: ScmObject,
-    mut env: ScmObject,
-) -> (ScmObject, ScmObject) {
+    args_list: ScmObject,
+    mut env: &mut ScmEnvironment,
+) -> ScmObject {
     match syntax.tag {
         BuildInSyntax::Quote => {
-            if let ScmObject::CONS(cons) = argslist {
+            if let ScmObject::CONS(cons) = args_list {
                 if let ScmObject::NIL = *cons.cdr {
                     let a: ScmObject = *cons.car;
-                    return (a, env);
+                    return a;
                 } else {
-                    return (
-                        ScmObject::new_error(String::from(
-                            "Quote restlist has more than one element",
-                        )),
-                        env,
-                    );
+                    return ScmObject::ERROR(String::from(
+                        "Quote restlist has more than one element",
+                    ));
                 }
             } else {
-                return (
-                    ScmObject::new_error(String::from("Quote restlist is no list")),
-                    env,
-                );
+                return ScmObject::ERROR(String::from("Quote restlist is no list"));
             }
         }
         BuildInSyntax::Define => {
-            if let ScmObject::CONS(cons) = argslist {
+            if let ScmObject::CONS(cons) = args_list {
                 if let ScmObject::CONS(value) = *cons.cdr {
                     if let ScmObject::NIL = *value.cdr {
                         let sym = *cons.car;
                         let expr = *value.car;
 
-                        env = super::environment::define_enviroment(env, sym, expr);
+                        env.define(sym, expr);
 
-                        return (ScmObject::Void, env);
+                        return ScmObject::Void;
                     } else {
-                        return (
-                            ScmObject::new_error(String::from(
-                                "Quote restlist more then tow element",
-                            )),
-                            env,
-                        );
+                        return ScmObject::ERROR(String::from(
+                            "Quote restlist more then tow element",
+                        ));
                     }
                 } else {
-                    return (
-                        ScmObject::new_error(String::from("Quote restlist only one element")),
-                        env,
-                    );
+                    return ScmObject::ERROR(String::from("Quote restlist only one element"));
                 }
             } else {
-                return (
-                    ScmObject::new_error(String::from("Quote restlist is no list")),
-                    env,
-                );
+                return ScmObject::ERROR(String::from("Quote restlist is no list"));
             }
         }
         _ => {
-            return (ScmObject::new_error(String::from("not a Syntax")), env);
+            return ScmObject::ERROR(String::from("not a Syntax"));
         }
     }
 }

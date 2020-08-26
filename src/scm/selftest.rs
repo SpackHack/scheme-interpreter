@@ -1,12 +1,15 @@
-use scheme_lib::ScmObject;
+use super::scmObject::ScmObject;
 
 fn assert(check: bool, message: String) {
     if !check {
         println!("Selftest Error: {}", message);
     }
-} 
+}
 
 pub fn selftest() {
-    let o = ScmObject::new_number(123);
-   //assert(o.value == ObjectType::NUMBER, String::from("wrong Tag should be Number"));
+    let o = ScmObject::NUMBER(123);
+    assert(
+        matches!(o,  ScmObject::NUMBER(number)),
+        String::from("wrong Tag should be Number"),
+    );
 }
