@@ -1,3 +1,5 @@
+use super::environment::ScmEnvironment;
+
 #[derive(Clone)]
 pub enum ScmObject {
     ERROR(String),
@@ -12,7 +14,7 @@ pub enum ScmObject {
     Void,
     FN(ScmBuildInFunction),
     Syntax(ScmBuildInSyntax),
-    USERFN(UserFunction),
+    USERFN(ScmUserFunction),
     EOF,
     None,
 }
@@ -54,12 +56,11 @@ pub enum BuildInSyntax {
 }
 
 #[derive(Clone)]
-pub struct UserFunction {
-    pub name: String,
-    pub num_args: i64,
+pub struct ScmUserFunction {
+    pub name: Option<String>,
     pub arg_list: Box<ScmObject>,
     pub body_list: Box<ScmObject>,
-    pub home_environment: Box<ScmObject>,
+    pub home_environment: Box<ScmEnvironment>,
 }
 
 impl ScmObject {
@@ -84,6 +85,15 @@ impl ScmObject {
             tag: tag,
             name: name,
             num_args: num_of_args,
+        })
+    }
+
+    pub fn new_user_fn(name: Option<String>, arg_list: ScmObject, body_list: ScmObject, home_environment: ScmEnvironment) -> Self {
+        ScmObject::USERFN(ScmUserFunction {
+            name: name,
+            arg_list: Box::from(arg_list),
+            body_list: Box::from(body_list),
+            home_environment: Box::from(home_environment),
         })
     }
 

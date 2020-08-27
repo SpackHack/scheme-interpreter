@@ -3,10 +3,9 @@ use std::io;
 use std::io::Write;
 
 pub fn print_result(input: ScmObject) {
-
     match input {
-        ScmObject::None => {},
-        ScmObject::Void => {},
+        ScmObject::None => {}
+        ScmObject::Void => {}
         _ => {
             io::stdout().flush().unwrap();
             print!("> ");
@@ -28,9 +27,7 @@ fn print(input: ScmObject) {
             print!("{}", chars);
         }
         ScmObject::CONS(cons) => {
-            print!("(");
             print_list(cons);
-            print!(")");
         }
         ScmObject::SYMBOL(symbole) => {
             print!("{}", symbole);
@@ -44,20 +41,37 @@ fn print(input: ScmObject) {
         ScmObject::NULL => {
             print!("#N");
         }
+        ScmObject::USERFN(user_fn) => {
+            println!(
+                "Funktion: {}",
+                user_fn.name.unwrap_or(String::from("NO_NAME"))
+            );
+            print!("Args: ");
+            print(*user_fn.arg_list);
+            println!();
+            print!("Body: ");
+            print(*user_fn.body_list);
+            println!();
+            println!("Env: ");
+        }
         _ => println!("Print Not implemented"),
     }
 }
 
 fn print_list(list: Cons) {
+    print!("(");
     print(*list.car);
 
     let cdr: ScmObject = *list.cdr;
 
     match cdr {
-        ScmObject::NIL => {}
+        ScmObject::NIL => {
+            print!(")");
+        }
         _ => {
-            print!(" . ");
+            print!(" .");
             print(cdr);
+            print!(")");
         }
     }
 }

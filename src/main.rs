@@ -61,7 +61,7 @@ fn run(mut stream: ScmStream, mut env: &mut ScmEnvironment) {
     }
 }
 
-fn init_build_in(mut env: &mut ScmEnvironment) {
+fn init_build_in(env: &mut ScmEnvironment) {
     env.define(
         ScmObject::SYMBOL(String::from("quota")),
         ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntax Quota"), 1),
@@ -69,6 +69,14 @@ fn init_build_in(mut env: &mut ScmEnvironment) {
     env.define(
         ScmObject::SYMBOL(String::from("define")),
         ScmObject::new_syntax(BuildInSyntax::Define, String::from("Syntax define"), 2),
+    );
+    env.define(
+        ScmObject::SYMBOL(String::from("set")),
+        ScmObject::new_syntax(BuildInSyntax::Set, String::from("Syntax set"), 2),
+    );
+    env.define(
+        ScmObject::SYMBOL(String::from("lambda")),
+        ScmObject::new_syntax(BuildInSyntax::Lambda, String::from("Syntax lambda"), 2),
     );
 
     env.define(
