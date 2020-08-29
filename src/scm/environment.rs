@@ -1,4 +1,4 @@
-use super::scmObject::*;
+use super::scm_object::*;
 
 #[derive(Clone)]
 pub struct ScmEnvironment {

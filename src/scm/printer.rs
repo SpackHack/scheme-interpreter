@@ -1,4 +1,4 @@
-use super::scmObject::{Cons, ScmObject};
+use super::scm_object::{Cons, ScmObject};
 use std::io;
 use std::io::Write;
 
@@ -9,13 +9,25 @@ pub fn print_result(input: ScmObject) {
         _ => {
             io::stdout().flush().unwrap();
             print!("> ");
-            print(input);
+            print(input, true);
             println!();
         }
     }
 }
 
-fn print(input: ScmObject) {
+pub fn display_or_print(scm: ScmObject, do_print: bool) {
+    match scm {
+        ScmObject::None => {}
+        ScmObject::Void => {}
+        _ => {
+            io::stdout().flush().unwrap();
+            print(scm, do_print);
+            println!();
+        }
+    }
+}
+
+fn print(input: ScmObject, do_print: bool) {
     match input {
         ScmObject::ERROR(error) => {
             print!("{}", error);
@@ -24,7 +36,11 @@ fn print(input: ScmObject) {
             print!("{}", numbers);
         }
         ScmObject::STRING(chars) => {
-            print!("{}", chars);
+            if do_print {
+                print!("\"{}\"", chars);
+            } else {
+                print!("{}", chars);
+            }
         }
         ScmObject::CONS(cons) => {
             print_list(cons);
@@ -47,10 +63,10 @@ fn print(input: ScmObject) {
                 user_fn.name.unwrap_or(String::from("NO_NAME"))
             );
             print!("Args: ");
-            print(*user_fn.arg_list);
+            print(*user_fn.arg_list, true);
             println!();
             print!("Body: ");
-            print(*user_fn.body_list);
+            print(*user_fn.body_list, true);
             println!();
             println!("Env: ");
         }
@@ -60,7 +76,7 @@ fn print(input: ScmObject) {
 
 fn print_list(list: Cons) {
     print!("(");
-    print(*list.car);
+    print(*list.car, true);
 
     let cdr: ScmObject = *list.cdr;
 
@@ -70,7 +86,7 @@ fn print_list(list: Cons) {
         }
         _ => {
             print!(" .");
-            print(cdr);
+            print(cdr, true);
             print!(")");
         }
     }

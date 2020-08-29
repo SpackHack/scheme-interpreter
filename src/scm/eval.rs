@@ -1,5 +1,6 @@
 use super::environment::*;
-use super::scmObject::*;
+use super::printer::*;
+use super::scm_object::*;
 
 pub fn eval(input: ScmObject, mut env: &mut ScmEnvironment) -> ScmObject {
     let a = input.clone();
@@ -29,7 +30,7 @@ pub fn eval(input: ScmObject, mut env: &mut ScmEnvironment) -> ScmObject {
 
 fn build_in_functions(
     function: ScmBuildInFunction,
-    args_list: ScmObject,
+    mut args_list: ScmObject,
     env: &mut ScmEnvironment,
 ) -> ScmObject {
     let mut arg_count: i64 = 1;
@@ -118,6 +119,20 @@ fn build_in_functions(
                 return ScmObject::NUMBER(result);
             }
         }
+        BuildInFunction::Display => {
+            while let ScmObject::CONS(cons) = args_list {
+                display_or_print(*cons.car, false);
+                args_list = *cons.cdr;
+            }
+            return ScmObject::Void;
+        }
+        BuildInFunction::Print => {
+            while let ScmObject::CONS(cons) = args_list {
+                display_or_print(*cons.car, true);
+                args_list = *cons.cdr;
+            }
+            return ScmObject::Void;
+        }
         _ => {
             return ScmObject::ERROR(String::from("Func not implement"));
         }
@@ -127,7 +142,7 @@ fn build_in_functions(
 
 fn build_in_syntax(
     syntax: ScmBuildInSyntax,
-    args_list: ScmObject,
+    mut args_list: ScmObject,
     env: &mut ScmEnvironment,
 ) -> ScmObject {
     match syntax.tag {
@@ -208,6 +223,45 @@ fn build_in_syntax(
             }
             // TODO: env
             return ScmObject::new_user_fn(None, arg_list, body_list, env.clone());
+        }
+        BuildInSyntax::If => {
+            // (if () () ())
+            // (if . (().()))
+
+            let condition: ScmObject;
+            let true_expression: ScmObject;
+            let false_expression: ScmObject;
+
+            if let ScmObject::CONS(cons) = args_list {
+                condition = *cons.car;
+                args_list = *cons.cdr;
+            } else {
+                return ScmObject::ERROR(String::from("need mind 3 arg (there are 0)"));
+            }
+            if let ScmObject::CONS(cons) = args_list {
+                true_expression = *cons.car;
+                args_list = *cons.cdr;
+            } else {
+                return ScmObject::ERROR(String::from("need mind 3 arg (there are 1)"));
+            }
+            if let ScmObject::CONS(cons) = args_list {
+                false_expression = *cons.car;
+                args_list = *cons.cdr;
+            } else {
+                return ScmObject::ERROR(String::from("need mind 3 arg (there are 2)"));
+            }
+            if let ScmObject::NIL = args_list {
+            } else {
+                return ScmObject::ERROR(String::from("need mind 3 arg (there are > 3)"));
+            }
+
+            let eval_condition = eval(condition, env);
+
+            if eval_condition.equal(&ScmObject::TRUE) {
+                return eval(true_expression, env);
+            } else {
+                return eval(false_expression, env);
+            }
         }
         _ => {
             return ScmObject::ERROR(String::from("not a Syntax"));

@@ -1,6 +1,6 @@
 mod scm;
 
-use scm::scmObject::{ScmObject, BuildInSyntax, BuildInFunction};
+use scm::scm_object::{ScmObject, BuildInSyntax, BuildInFunction};
 use scm::stream::ScmStream;
 use scm::environment::ScmEnvironment;
 use std::env;
@@ -57,14 +57,15 @@ fn run(mut stream: ScmStream, mut env: &mut ScmEnvironment) {
             break;
         }
         let evaluiert = scm::eval::eval(input, &mut env);
+        //let evaluiert = scm::teval::eval(input, &mut env);
         scm::printer::print_result(evaluiert);
     }
 }
 
 fn init_build_in(env: &mut ScmEnvironment) {
     env.define(
-        ScmObject::SYMBOL(String::from("quota")),
-        ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntax Quota"), 1),
+        ScmObject::SYMBOL(String::from("quote")),
+        ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntex Quota"), 1),
     );
     env.define(
         ScmObject::SYMBOL(String::from("define")),
@@ -78,6 +79,10 @@ fn init_build_in(env: &mut ScmEnvironment) {
         ScmObject::SYMBOL(String::from("lambda")),
         ScmObject::new_syntax(BuildInSyntax::Lambda, String::from("Syntax lambda"), 2),
     );
+    env.define(
+        ScmObject::SYMBOL(String::from("if")),
+        ScmObject::new_syntax(BuildInSyntax::If, String::from("Syntax if"), 3),
+    );
 
     env.define(
         ScmObject::SYMBOL(String::from("+")),
@@ -86,5 +91,13 @@ fn init_build_in(env: &mut ScmEnvironment) {
     env.define(
         ScmObject::SYMBOL(String::from("-")),
         ScmObject::new_fn(BuildInFunction::Minus, String::from("-"), 2),
+    );
+    env.define(
+        ScmObject::SYMBOL(String::from("display")),
+        ScmObject::new_fn(BuildInFunction::Display, String::from("display"), 1),
+    );
+    env.define(
+        ScmObject::SYMBOL(String::from("print")),
+        ScmObject::new_fn(BuildInFunction::Print, String::from("print"), 1),
     );
 }

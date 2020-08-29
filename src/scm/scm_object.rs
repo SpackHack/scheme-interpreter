@@ -36,6 +36,37 @@ pub struct ScmBuildInFunction {
 pub enum BuildInFunction {
     Plus,
     Minus,
+    Display,
+    Print,
+    // FN_PLUS,
+    // FN_MINUS,
+    // FN_DISPLAY,
+    // FN_PRINT,
+
+    // FN_TIMES,
+    // FN_CONS,
+    // FN_CAR,
+    // FN_CDR,
+    // FN_EQ,
+    // FN_GT,
+    // FN_LT,
+    // FN_STRINGQ,
+    // FN_STRINGEQ,
+    // FN_CONSQ,
+    // FN_NUMBERQ,
+    // FN_FUNCTIONQ,
+    // FN_USER_DEFINED_FUNCTIONQ,
+    // FN_EQNR,
+    // FN_FUNCTION_BODY,
+    // FN_FUNCTION_ARGLIST,
+    // FN_LIST,
+    
+    // FN_LOAD,
+    // FN_OPEN_FOR_READING,
+    // FN_CLOSE,
+    // FN_READ,
+    // FN_READ_CHAR,
+    // FN_READ_LINE,
 }
 
 #[derive(Clone)]
@@ -53,6 +84,12 @@ pub enum BuildInSyntax {
     If,
     Set,
     Begin,
+    // SYN_QUOTE,
+    // SYN_LAMBDA,
+    // SYN_DEFINE,
+    // SYN_IF,
+    // SYN_SET,
+    // SYN_BEGIN,
 }
 
 #[derive(Clone)]
@@ -64,9 +101,8 @@ pub struct ScmUserFunction {
 }
 
 impl ScmObject {
-
     pub fn new_cons(car: ScmObject, cdr: ScmObject) -> Self {
-        ScmObject::CONS(Cons{
+        ScmObject::CONS(Cons {
             car: Box::new(car),
             cdr: Box::new(cdr),
         })
@@ -88,7 +124,12 @@ impl ScmObject {
         })
     }
 
-    pub fn new_user_fn(name: Option<String>, arg_list: ScmObject, body_list: ScmObject, home_environment: ScmEnvironment) -> Self {
+    pub fn new_user_fn(
+        name: Option<String>,
+        arg_list: ScmObject,
+        body_list: ScmObject,
+        home_environment: ScmEnvironment,
+    ) -> Self {
         ScmObject::USERFN(ScmUserFunction {
             name: name,
             arg_list: Box::from(arg_list),
@@ -99,6 +140,18 @@ impl ScmObject {
 
     pub fn equal(&self, scm: &ScmObject) -> bool {
         match self {
+            ScmObject::FALSE => {
+                if let ScmObject::FALSE = scm {
+                    return true;
+                }
+                false
+            }
+            ScmObject::TRUE => {
+                if let ScmObject::TRUE = scm {
+                    return true;
+                }
+                false
+            }
             ScmObject::SYMBOL(symbole) => {
                 if let ScmObject::SYMBOL(s) = &scm {
                     if symbole == s {
@@ -109,6 +162,5 @@ impl ScmObject {
             }
             _ => false,
         }
-
     }
 }

@@ -1,4 +1,4 @@
-use super::scmObject::ScmObject;
+use super::scm_object::ScmObject;
 
 static mut NUMBER_OF_SYMBOLES: i64 = 0;
 static mut SYMBOLES: Vec<ScmObject> = Vec::new();

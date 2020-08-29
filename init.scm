@@ -9,4 +9,4 @@
 (define e 3)
 
 (define a (lambda (a) (a) ) )
-(define plus (lambda (y x) (+ y x)))
+(define plus (lambda (y x) (+ (+ 1 1) x)))

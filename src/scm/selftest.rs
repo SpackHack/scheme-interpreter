@@ -1,4 +1,4 @@
-use super::scmObject::ScmObject;
+use super::scm_object::ScmObject;
 
 fn assert(check: bool, message: String) {
     if !check {

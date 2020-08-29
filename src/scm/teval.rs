@@ -1,28 +1,47 @@
-// use super::environment::*;
-// use scheme_lib::*;
+use super::environment::*;
+use super::scm_object::*;
+use super::stack::*;
 
-// pub fn eval(input: ScmObject, mut env: &mut ScmEnvironment) -> ScmObject {
-//     let a = input.clone();
-//     match input {
-//         ScmObject::CONS(cons) => {
-//             let func = *cons.car;
-//             let eval_func = eval(func, env);
+static mut STACK: Stack<ScmObject> = Stack::new(100);
+static mut RETURN_STACK: Vec<ScmObject> = Vec::new();
 
-//             match eval_func {
-//                 // ScmObject::FN(function) => build_in_functions(function, *cons.cdr, env),
-//                 // ScmObject::Syntax(syntax) => build_in_syntax(syntax, *cons.cdr, &mut env),
-//                 // ScmObject::USERFN(function) => ScmObject::new_error(String::from("User FN ")),
-//                 _ => ScmObject::new_error(String::from("not a func")),
-//             }
-//         }
-//         ScmObject::SYMBOL(symbole) => {
-//             let result = get_environment(&env, a);
-//             if let ScmObject::None = result {
-//                 return ScmObject::ERROR(String::from("Symbole not found"));
-//             } else {
-//                 return result;
-//             }
-//         }
-//         _ => input,
-//     }
-// }
+static mut return_value: ScmObject = ScmObject::NIL;
+
+pub struct ReturnFunction {
+    pub func: fn()  -> Option<ReturnFunction>,
+}
+
+pub fn eval(input: ScmObject, mut env: &mut ScmEnvironment) -> ScmObject {
+    unsafe{ STACK.push(input) };
+    return trampolin(t_eval);
+}
+
+fn trampolin(function_ptr:  fn() -> Option<ReturnFunction>) -> ScmObject {
+
+    unsafe { RETURN_STACK.push(ScmObject::None) };
+
+    let mut next_function_ptr: Option<ReturnFunction> = Some(ReturnFunction{func:function_ptr});
+
+    while let Some(f) = next_function_ptr {
+        next_function_ptr = (f.func)();
+    }
+    
+    return unsafe{return_value.clone() };
+}
+
+pub fn t_eval() -> Option<ReturnFunction> {
+    
+    let expression: ScmObject = unsafe{ STACK.pop() };
+    let env: ScmObject;
+
+    match expression {
+        ScmObject::SYMBOL(symbol) => {
+
+        }
+        _ => {}
+    }
+
+
+    return None;
+    //return Some(ReturnFunction{func: t_eval});
+}

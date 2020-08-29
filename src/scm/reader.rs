@@ -1,5 +1,5 @@
 use super::memory::new_symbole;
-use super::scmObject::{ScmObject};
+use super::scm_object::{ScmObject};
 use super::stream::*;
 use std::io::Read;
 
