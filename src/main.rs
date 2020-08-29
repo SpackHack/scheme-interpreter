@@ -1,10 +1,12 @@
 mod scm;
 
-use scm::scm_object::{ScmObject, BuildInSyntax, BuildInFunction};
-use scm::stream::ScmStream;
 use scm::environment::ScmEnvironment;
+use scm::scm_object::{BuildInFunction, BuildInSyntax, NumArgs, ScmObject};
+use scm::stream::ScmStream;
 use std::env;
 use std::fs::File;
+
+use std::time::SystemTime;
 
 fn main() {
     scm::selftest::selftest();
@@ -39,7 +41,7 @@ fn main() {
     if init {
         match File::open("./init.scm") {
             Ok(file) => {
-                run(ScmStream::new_file(file), &mut top_env);
+                top_env = run(ScmStream::new_file(file), top_env);
             }
             Err(err) => {
                 println!("ERR in read init: {}", err);
@@ -47,25 +49,30 @@ fn main() {
         }
     }
 
-    run(input_stream, &mut top_env);
+    run(input_stream, top_env);
 }
 
-fn run(mut stream: ScmStream, mut env: &mut ScmEnvironment) {
+fn run(mut stream: ScmStream, mut env: ScmEnvironment) -> ScmEnvironment {
     loop {
         let input: ScmObject = scm::reader::read(&mut stream);
         if let ScmObject::EOF = input {
             break;
         }
-        let evaluiert = scm::eval::eval(input, &mut env);
-        //let evaluiert = scm::teval::eval(input, &mut env);
-        scm::printer::print_result(evaluiert);
+        //let evaluiert = scm::eval::eval(input, &mut env);
+        let start = SystemTime::now();
+        let re = scm::teval::eval(input, env);
+        let stop = SystemTime::now();
+        env = re.1;
+        scm::printer::print_result(re.0);
+        println!("exec time: {:?}", stop.duration_since(start));
     }
+    env
 }
 
 fn init_build_in(env: &mut ScmEnvironment) {
     env.define(
         ScmObject::SYMBOL(String::from("quote")),
-        ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntex Quota"), 1),
+        ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntax Quota"), 1),
     );
     env.define(
         ScmObject::SYMBOL(String::from("define")),
@@ -83,21 +90,41 @@ fn init_build_in(env: &mut ScmEnvironment) {
         ScmObject::SYMBOL(String::from("if")),
         ScmObject::new_syntax(BuildInSyntax::If, String::from("Syntax if"), 3),
     );
+    env.define(
+        ScmObject::SYMBOL(String::from("begin")),
+        ScmObject::new_syntax(BuildInSyntax::Begin, String::from("Syntax begin"), 3),
+    );
 
     env.define(
         ScmObject::SYMBOL(String::from("+")),
-        ScmObject::new_fn(BuildInFunction::Plus, String::from("FN Plus"), 2),
+        ScmObject::new_fn(
+            BuildInFunction::Plus,
+            String::from("FN Plus"),
+            NumArgs::Unlimited as i64,
+        ),
     );
     env.define(
         ScmObject::SYMBOL(String::from("-")),
-        ScmObject::new_fn(BuildInFunction::Minus, String::from("-"), 2),
+        ScmObject::new_fn(
+            BuildInFunction::Minus,
+            String::from("-"),
+            NumArgs::Unlimited as i64,
+        ),
     );
     env.define(
         ScmObject::SYMBOL(String::from("display")),
-        ScmObject::new_fn(BuildInFunction::Display, String::from("display"), 1),
+        ScmObject::new_fn(
+            BuildInFunction::Display,
+            String::from("display"),
+            NumArgs::Unlimited as i64,
+        ),
     );
     env.define(
         ScmObject::SYMBOL(String::from("print")),
-        ScmObject::new_fn(BuildInFunction::Print, String::from("print"), 1),
+        ScmObject::new_fn(
+            BuildInFunction::Print,
+            String::from("print"),
+            NumArgs::Unlimited as i64,
+        ),
     );
 }

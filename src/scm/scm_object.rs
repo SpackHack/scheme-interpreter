@@ -29,7 +29,11 @@ pub struct Cons {
 pub struct ScmBuildInFunction {
     pub tag: BuildInFunction,
     pub name: String,
-    pub num_args: i64,
+    pub num_args: Option<i64>,
+}
+
+pub enum NumArgs {
+    Unlimited = -1,
 }
 
 #[derive(Clone)]
@@ -109,10 +113,18 @@ impl ScmObject {
     }
 
     pub fn new_fn(tag: BuildInFunction, name: String, num_of_args: i64) -> Self {
+        let args: Option<i64>;
+        if num_of_args != -1 {
+            args = Some(num_of_args);
+        } else {
+            args = None;
+        }
+
         ScmObject::FN(ScmBuildInFunction {
             tag: tag,
             name: name,
-            num_args: num_of_args,
+            num_args: args,
+            
         })
     }
 
@@ -136,6 +148,13 @@ impl ScmObject {
             body_list: Box::from(body_list),
             home_environment: Box::from(home_environment),
         })
+    }
+
+    pub fn getNumber(&self) -> i64 {
+        if let ScmObject::NUMBER(n) = self {
+            return *n;
+        }
+        panic!("get Number of not a number");
     }
 
     pub fn equal(&self, scm: &ScmObject) -> bool {

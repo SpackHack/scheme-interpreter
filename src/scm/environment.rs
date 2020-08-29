@@ -1,5 +1,7 @@
 use super::scm_object::*;
 
+// TODO: add hashing
+
 #[derive(Clone)]
 pub struct ScmEnvironment {
     pub parent_env: Option<Box<ScmEnvironment>>,

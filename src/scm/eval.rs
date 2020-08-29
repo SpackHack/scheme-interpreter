@@ -35,90 +35,98 @@ fn build_in_functions(
 ) -> ScmObject {
     let mut arg_count: i64 = 1;
 
+    if let Some(num_of_args) = function.num_args {
+        if arg_count != num_of_args {
+            return ScmObject::ERROR(String::from(
+                "Function has not the right number of args",
+            ));
+        }
+    }
+
     match function.tag {
-        BuildInFunction::Plus => {
-            if let ScmObject::CONS(cons) = args_list {
-                let mut arg = *cons.car;
-                let mut restlist = *cons.cdr;
-                let mut sum: i64 = 0;
+        // BuildInFunction::Plus => {
+        //     if let ScmObject::CONS(cons) = args_list {
+        //         let mut arg = *cons.car;
+        //         let mut restlist = *cons.cdr;
+        //         let mut sum: i64 = 0;
 
-                while arg_count <= function.num_args {
-                    if let ScmObject::NIL = restlist {
-                        if arg_count != function.num_args {
-                            return ScmObject::ERROR(String::from(
-                                "Plus have not the right number of args",
-                            ));
-                        }
-                    } else {
-                        if arg_count == function.num_args {
-                            return ScmObject::ERROR(String::from(
-                                "Plus have not the right number of args",
-                            ));
-                        }
-                    }
+        //         while arg_count <= function.num_args {
+        //             if let ScmObject::NIL = restlist {
+        //                 if arg_count != function.num_args {
+        //                     return ScmObject::ERROR(String::from(
+        //                         "Plus have not the right number of args",
+        //                     ));
+        //                 }
+        //             } else {
+        //                 if arg_count == function.num_args {
+        //                     return ScmObject::ERROR(String::from(
+        //                         "Plus have not the right number of args",
+        //                     ));
+        //                 }
+        //             }
 
-                    while let ScmObject::SYMBOL(_symbole) = arg.clone() {
-                        arg = eval(arg, env);
-                    }
+        //             while let ScmObject::SYMBOL(_symbole) = arg.clone() {
+        //                 arg = eval(arg, env);
+        //             }
 
-                    if let ScmObject::NUMBER(number) = arg {
-                        sum = sum + number;
-                    } else {
-                        return ScmObject::ERROR(String::from("arg is not a number"));
-                    }
+        //             if let ScmObject::NUMBER(number) = arg {
+        //                 sum = sum + number;
+        //             } else {
+        //                 return ScmObject::ERROR(String::from("arg is not a number"));
+        //             }
 
-                    arg_count = arg_count + 1;
-                    if let ScmObject::CONS(cons) = restlist {
-                        arg = *cons.car;
-                        restlist = *cons.cdr;
-                    }
-                }
-                return ScmObject::NUMBER(sum);
-            }
-        }
-        BuildInFunction::Minus => {
-            if let ScmObject::CONS(cons) = args_list {
-                let mut arg = *cons.car;
-                let mut restlist = *cons.cdr;
-                let mut result: i64 = 0;
-                while arg_count <= function.num_args {
-                    if let ScmObject::NIL = restlist {
-                        if arg_count != function.num_args {
-                            return ScmObject::ERROR(String::from(
-                                "Minus have not the right number of args",
-                            ));
-                        }
-                    } else {
-                        if arg_count == function.num_args {
-                            return ScmObject::ERROR(String::from(
-                                "Minus have not the right number of args",
-                            ));
-                        }
-                    }
+        //             arg_count = arg_count + 1;
+        //             if let ScmObject::CONS(cons) = restlist {
+        //                 arg = *cons.car;
+        //                 restlist = *cons.cdr;
+        //             }
+        //         }
+        //         return ScmObject::NUMBER(sum);
+        //     }
+        // }
+        // BuildInFunction::Minus => {
+        //     if let ScmObject::CONS(cons) = args_list {
+        //         let mut arg = *cons.car;
+        //         let mut restlist = *cons.cdr;
+        //         let mut result: i64 = 0;
+        //         while arg_count <= function.num_args {
+        //             if let ScmObject::NIL = restlist {
+        //                 if arg_count != function.num_args {
+        //                     return ScmObject::ERROR(String::from(
+        //                         "Minus have not the right number of args",
+        //                     ));
+        //                 }
+        //             } else {
+        //                 if arg_count == function.num_args {
+        //                     return ScmObject::ERROR(String::from(
+        //                         "Minus have not the right number of args",
+        //                     ));
+        //                 }
+        //             }
 
-                    while let ScmObject::SYMBOL(_symbole) = arg.clone() {
-                        arg = eval(arg, env);
-                    }
+        //             while let ScmObject::SYMBOL(_symbole) = arg.clone() {
+        //                 arg = eval(arg, env);
+        //             }
 
-                    if let ScmObject::NUMBER(number) = arg {
-                        if arg_count == 1 {
-                            result = number;
-                        } else {
-                            result = result - number;
-                        }
-                    } else {
-                        return ScmObject::ERROR(String::from("arg is not a number"));
-                    }
+        //             if let ScmObject::NUMBER(number) = arg {
+        //                 if arg_count == 1 {
+        //                     result = number;
+        //                 } else {
+        //                     result = result - number;
+        //                 }
+        //             } else {
+        //                 return ScmObject::ERROR(String::from("arg is not a number"));
+        //             }
 
-                    arg_count = arg_count + 1;
-                    if let ScmObject::CONS(cons) = restlist {
-                        arg = *cons.car;
-                        restlist = *cons.cdr;
-                    }
-                }
-                return ScmObject::NUMBER(result);
-            }
-        }
+        //             arg_count = arg_count + 1;
+        //             if let ScmObject::CONS(cons) = restlist {
+        //                 arg = *cons.car;
+        //                 restlist = *cons.cdr;
+        //             }
+        //         }
+        //         return ScmObject::NUMBER(result);
+        //     }
+        // }
         BuildInFunction::Display => {
             while let ScmObject::CONS(cons) = args_list {
                 display_or_print(*cons.car, false);

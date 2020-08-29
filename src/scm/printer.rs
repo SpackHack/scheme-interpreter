@@ -43,6 +43,7 @@ fn print(input: ScmObject, do_print: bool) {
             }
         }
         ScmObject::CONS(cons) => {
+            print!("(");
             print_list(cons);
         }
         ScmObject::SYMBOL(symbole) => {
@@ -58,34 +59,31 @@ fn print(input: ScmObject, do_print: bool) {
             print!("#N");
         }
         ScmObject::USERFN(user_fn) => {
-            println!(
-                "Funktion: {}",
-                user_fn.name.unwrap_or(String::from("NO_NAME"))
-            );
-            print!("Args: ");
-            print(*user_fn.arg_list, true);
-            println!();
-            print!("Body: ");
-            print(*user_fn.body_list, true);
-            println!();
-            println!("Env: ");
+            print!("(lambda (",);
+            if let ScmObject::CONS(cons) = *user_fn.arg_list {
+                print_list(cons);
+            }
+            print!(" (");
+            if let ScmObject::CONS(cons) = *user_fn.body_list {
+                print_list(cons);
+            }
+            print!(" )");
         }
-        _ => println!("Print Not implemented"),
+        _ => print!("Print Not implemented"),
     }
 }
 
 fn print_list(list: Cons) {
-    print!("(");
     print(*list.car, true);
 
     let cdr: ScmObject = *list.cdr;
 
     match cdr {
         ScmObject::NIL => {
-            print!(")");
+            print!(".\\)");
         }
         _ => {
-            print!(" .");
+            print!(".");
             print(cdr, true);
             print!(")");
         }
