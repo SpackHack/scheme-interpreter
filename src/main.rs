@@ -81,34 +81,34 @@ fn run(mut stream: ScmStream, mut env: ScmEnvironment, show_time: bool) -> ScmEn
 fn init_build_in(env: &mut ScmEnvironment) {
     env.define(
         ScmObject::Symbol(String::from("quote")),
-        &ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntax Quota"), 1),
+        &ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Quota"), 1),
     );
     env.define(
         ScmObject::Symbol(String::from("define")),
-        &ScmObject::new_syntax(BuildInSyntax::Define, String::from("Syntax define"), 2),
+        &ScmObject::new_syntax(BuildInSyntax::Define, String::from("define"), 2),
     );
     env.define(
         ScmObject::Symbol(String::from("set")),
-        &ScmObject::new_syntax(BuildInSyntax::Set, String::from("Syntax set"), 2),
+        &ScmObject::new_syntax(BuildInSyntax::Set, String::from("set"), 2),
     );
     env.define(
         ScmObject::Symbol(String::from("lambda")),
-        &ScmObject::new_syntax(BuildInSyntax::Lambda, String::from("Syntax lambda"), 2),
+        &ScmObject::new_syntax(BuildInSyntax::Lambda, String::from("lambda"), 2),
     );
     env.define(
         ScmObject::Symbol(String::from("if")),
-        &ScmObject::new_syntax(BuildInSyntax::If, String::from("Syntax if"), 3),
+        &ScmObject::new_syntax(BuildInSyntax::If, String::from("if"), 3),
     );
     env.define(
         ScmObject::Symbol(String::from("begin")),
-        &ScmObject::new_syntax(BuildInSyntax::Begin, String::from("Syntax begin"), 3),
+        &ScmObject::new_syntax(BuildInSyntax::Begin, String::from("begin"), 3),
     );
 
     env.define(
         ScmObject::Symbol(String::from("+")),
         &ScmObject::new_fn(
             BuildInFunction::Plus,
-            String::from("FN Plus"),
+            String::from("Plus"),
             NumArgs::Unlimited as i64,
         ),
     );
@@ -116,7 +116,7 @@ fn init_build_in(env: &mut ScmEnvironment) {
         ScmObject::Symbol(String::from("-")),
         &ScmObject::new_fn(
             BuildInFunction::Minus,
-            String::from("-"),
+            String::from("Minus"),
             NumArgs::Unlimited as i64,
         ),
     );
@@ -134,6 +134,14 @@ fn init_build_in(env: &mut ScmEnvironment) {
             BuildInFunction::Print,
             String::from("print"),
             NumArgs::Unlimited as i64,
+        ),
+    );
+    env.define(
+        ScmObject::Symbol(String::from("print-env")),
+        &ScmObject::new_fn(
+            BuildInFunction::PrintEnv,
+            String::from("print-env"),
+            0,
         ),
     );
 }

@@ -6,7 +6,8 @@ use super::stack::*;
 static mut STACK: Stack<ScmObject> = Stack::new(100);
 static mut RETURN_STACK: Stack<ReturnFunction> = Stack::new(100);
 static mut ENV_STACK: Stack<ScmEnvironment> = Stack::new(100);
-static mut ENV_COUNTER: Vec<i64> = vec![];
+static mut ENV_LEVEL: i64 = 1;
+static mut ENV_COUNTER: Stack<i64> = Stack::new(0);
 
 static mut RETURN_VALUE: ScmObject = ScmObject::Nil;
 
@@ -24,10 +25,10 @@ fn push(scm: ScmObject) {
 }
 
 fn get_stack_element(index: i64) -> Option<ScmObject> {
-    unsafe { STACK.get(index) }
+    unsafe { STACK.remove(index) }
 }
 
-fn get_stack_size() -> usize {
+fn get_stack_size() -> i64 {
     unsafe { STACK.get_length() }
 }
 
@@ -40,39 +41,38 @@ fn push_re(func: ReturnFunction) {
 }
 
 fn pop_env() -> ScmEnvironment {
-    let re: ScmEnvironment;
     unsafe {
-        if let Some(env_count) = ENV_COUNTER.pop() {
-            match ENV_STACK.pop() {
-                Some(env) => {
-                    re = env;
+        if let Some(env) = ENV_STACK.pop() {
+            if let Some(s) = ENV_COUNTER.pop() {
+                if s > 0 {
+                    ENV_STACK.push(env.clone());
+                    ENV_COUNTER.push(s - 1)
                 }
-                None => panic!("no more env"),
-            }
-
-            if env_count != 0 {
-                ENV_COUNTER.push(env_count - 1);
-                ENV_STACK.push(re.clone());
+                return env;
+            } else {
+                panic!("no more env counter");
             }
         } else {
             panic!("no more env");
         }
     }
-    re
 }
 
 fn push_env(env: &ScmEnvironment, new: bool) {
     unsafe {
         if new {
+            ENV_LEVEL += 1;
+        }
+
+        if ENV_LEVEL > ENV_STACK.get_length() {
             ENV_STACK.push(env.clone());
             ENV_COUNTER.push(0);
         } else {
-            if let Some(env_count) = ENV_COUNTER.pop() {
-                update_env(env.clone());
-                ENV_COUNTER.push(env_count + 1);
+            update_env(env.clone());
+            if let Some(s) = ENV_COUNTER.pop() {
+                ENV_COUNTER.push(s + 1)
             } else {
-                ENV_STACK.push(env.clone());
-                ENV_COUNTER.push(0);
+                panic!("no more env counter");
             }
         }
     }
@@ -82,6 +82,16 @@ fn update_env(env: ScmEnvironment) {
     unsafe {
         if let Some(_) = ENV_STACK.pop() {
             ENV_STACK.push(env);
+        }
+    }
+}
+
+fn env_down() {
+    unsafe {
+        if ENV_LEVEL == 0 {
+            panic!("canot go env level -1");
+        } else {
+            ENV_LEVEL -= 1;
         }
     }
 }
@@ -231,7 +241,7 @@ fn build_in_function1() -> Option<ReturnFunction> {
 }
 
 fn build_in_function2() -> Option<ReturnFunction> {
-    let env = pop_env();
+    let mut env = pop_env();
     let func: ScmObject = pop();
     let stack_index_of_first_arg = pop();
 
@@ -315,17 +325,18 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 set_return_value(ScmObject::Void);
                 return pop_re();
             }
+            BuildInFunction::PrintEnv => {
+                env.print();
+                set_return_value(ScmObject::Void);
+                return pop_re();
+            }
             _ => {
-                set_return_value(ScmObject::Error(String::from(
-                    "fn: is not impl",
-                )));
+                set_return_value(ScmObject::Error(String::from("fn: is not impl")));
                 return None;
             }
         }
     }
-    set_return_value(ScmObject::Error(String::from(
-        "fn: is not a function",
-    )));
+    set_return_value(ScmObject::Error(String::from("fn: is not a function")));
     return None;
 }
 
@@ -650,10 +661,10 @@ fn t_user_function() -> Option<ReturnFunction> {
         return Some(ReturnFunction::new(t_eval));
     }
 
-    let mut new_env = ScmEnvironment::new();
-    new_env.set_parent_env(&env);
-
     if let ScmObject::UserFunction(func) = function {
+        let mut new_env = ScmEnvironment::new();
+        new_env.set_parent_env(&*func.home_environment);
+
         if let ScmObject::Nil = *func.arg_list {
             match *func.body_list {
                 ScmObject::Cons(cons) => {
@@ -702,10 +713,10 @@ fn t_user_function1() -> Option<ReturnFunction> {
         return Some(ReturnFunction::new(t_eval));
     }
 
-    let mut new_env = ScmEnvironment::new();
-    new_env.set_parent_env(&env);
-
     if let ScmObject::UserFunction(func) = function {
+        let mut new_env = ScmEnvironment::new();
+        new_env.set_parent_env(&*func.home_environment);
+
         let stack_index_of_arg = start_index.get_number();
         let mut arg_names = *func.arg_list;
 
@@ -730,16 +741,17 @@ fn t_user_function1() -> Option<ReturnFunction> {
         }
 
         if let ScmObject::Cons(cons) = *func.body_list {
-            push_env(&new_env, true);
             if let ScmObject::Nil = *cons.cdr {
+                push_env(&new_env, true);
                 push(*cons.car);
                 return Some(ReturnFunction::new(t_eval));
             }
+            push_env(&new_env, true);
             push(*cons.cdr);
             push_env(&new_env, false);
             push(*cons.car);
             push_re(ReturnFunction::new(t_user_function2));
-            return Some(ReturnFunction::new(t_eval));
+            return Some(ReturnFunction::new(t_uf_eval));
         } else {
         }
     }
@@ -755,7 +767,7 @@ fn t_user_function2() -> Option<ReturnFunction> {
         if let ScmObject::Nil = *cons.cdr {
             push_env(&env, false);
             push(*cons.car);
-            return Some(ReturnFunction::new(t_eval));
+            return Some(ReturnFunction::new(t_uf_eval));
         }
         push_env(&env, false);
         push(*cons.cdr);
@@ -766,4 +778,31 @@ fn t_user_function2() -> Option<ReturnFunction> {
     }
     set_return_value(ScmObject::Error(String::from("user fn: body is empty")));
     return None;
+}
+
+// Needed for drop level of env after last body element of function
+fn t_uf_eval() -> Option<ReturnFunction> {
+    let expression: ScmObject = pop();
+    let mut env: ScmEnvironment = pop_env();
+
+    let a = expression.clone();
+
+    match a {
+        ScmObject::Symbol(_) => {
+            set_return_value(env.get(expression));
+            return pop_re();
+        }
+        ScmObject::Cons(cons) => {
+            push_env(&env, false);
+            push(expression);
+            push_env(&env, false);
+            push(*cons.car);
+            push_re(ReturnFunction::new(t_eval2));
+            return Some(ReturnFunction::new(t_eval));
+        }
+        _ => {}
+    }
+    env_down();
+    set_return_value(expression);
+    return pop_re();
 }

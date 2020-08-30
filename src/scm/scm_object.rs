@@ -42,6 +42,7 @@ pub enum BuildInFunction {
     Minus,
     Display,
     Print,
+    PrintEnv,
     // FN_PLUS,
     // FN_MINUS,
     // FN_DISPLAY,

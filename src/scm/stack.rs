@@ -15,14 +15,15 @@ impl<T> Stack<T> {
         self.data.push(ob);
     }
 
-    pub fn get_length(&self) -> usize {
-        self.data.len()
+    pub fn get_length(&self) -> i64 {
+        self.data.len() as i64
     }
 
-    pub fn get(&mut self, index: i64) -> Option<T> {
+    pub fn remove(&mut self, index: i64) -> Option<T> {
         if index < self.data.len() as i64 {
             return Some(self.data.remove(index as usize));
         }
         None
     }
+
 }

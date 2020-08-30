@@ -7,9 +7,9 @@ pub fn print_result(input: ScmObject) {
         ScmObject::None => {}
         ScmObject::Void => {}
         _ => {
-            io::stdout().flush().unwrap();
             print!("> ");
             print(input, true);
+            io::stdout().flush().unwrap();
         }
     }
 }
@@ -19,8 +19,8 @@ pub fn display_or_print(scm: ScmObject, do_print: bool) {
         ScmObject::None => {}
         ScmObject::Void => {}
         _ => {
-            io::stdout().flush().unwrap();
             print(scm, do_print);
+            io::stdout().flush().unwrap();
         }
     }
 }
@@ -48,10 +48,10 @@ fn print(input: ScmObject, do_print: bool) {
             print!("{}", symbole);
         }
         ScmObject::Function(function) => {
-
+            print!("#function {}", function.name);
         }
         ScmObject::Syntax(syntax) => {
-            
+            print!("#syntax {}", syntax.name);
         }
         ScmObject::UserFunction(user_fn) => {
             print!("(lambda (",);
