@@ -2,21 +2,21 @@ use super::environment::ScmEnvironment;
 
 #[derive(Clone)]
 pub enum ScmObject {
-    ERROR(String),
-    NUMBER(i64),
-    STRING(String),
-    CONS(Cons),
-    NIL, // end of list
-    SYMBOL(String),
-    TRUE,
-    FALSE,
-    NULL,
-    Void,
-    FN(ScmBuildInFunction),
+    Error(String),
+    Number(i64),
+    Chars(String),
+    Cons(Cons),
+    Nil, // end of list
+    Symbol(String),
+    Function(ScmBuildInFunction),
     Syntax(ScmBuildInSyntax),
-    USERFN(ScmUserFunction),
-    EOF,
+    UserFunction(ScmUserFunction),
+    EndOfFile,
     None,
+    Null,
+    Void,
+    True,
+    False,
 }
 
 #[derive(Clone)]
@@ -88,12 +88,6 @@ pub enum BuildInSyntax {
     If,
     Set,
     Begin,
-    // SYN_QUOTE,
-    // SYN_LAMBDA,
-    // SYN_DEFINE,
-    // SYN_IF,
-    // SYN_SET,
-    // SYN_BEGIN,
 }
 
 #[derive(Clone)]
@@ -106,7 +100,7 @@ pub struct ScmUserFunction {
 
 impl ScmObject {
     pub fn new_cons(car: ScmObject, cdr: ScmObject) -> Self {
-        ScmObject::CONS(Cons {
+        ScmObject::Cons(Cons {
             car: Box::new(car),
             cdr: Box::new(cdr),
         })
@@ -120,7 +114,7 @@ impl ScmObject {
             args = None;
         }
 
-        ScmObject::FN(ScmBuildInFunction {
+        ScmObject::Function(ScmBuildInFunction {
             tag: tag,
             name: name,
             num_args: args,
@@ -142,7 +136,7 @@ impl ScmObject {
         body_list: ScmObject,
         home_environment: ScmEnvironment,
     ) -> Self {
-        ScmObject::USERFN(ScmUserFunction {
+        ScmObject::UserFunction(ScmUserFunction {
             name: name,
             arg_list: Box::from(arg_list),
             body_list: Box::from(body_list),
@@ -151,7 +145,7 @@ impl ScmObject {
     }
 
     pub fn get_number(&self) -> i64 {
-        if let ScmObject::NUMBER(n) = self {
+        if let ScmObject::Number(n) = self {
             return *n;
         }
         panic!("get Number of not a number");
@@ -159,20 +153,20 @@ impl ScmObject {
 
     pub fn equal(&self, scm: &ScmObject) -> bool {
         match self {
-            ScmObject::FALSE => {
-                if let ScmObject::FALSE = scm {
+            ScmObject::False => {
+                if let ScmObject::False = scm {
                     return true;
                 }
                 false
             }
-            ScmObject::TRUE => {
-                if let ScmObject::TRUE = scm {
+            ScmObject::True => {
+                if let ScmObject::True = scm {
                     return true;
                 }
                 false
             }
-            ScmObject::SYMBOL(symbole) => {
-                if let ScmObject::SYMBOL(s) = &scm {
+            ScmObject::Symbol(symbole) => {
+                if let ScmObject::Symbol(s) = &scm {
                     if symbole == s {
                         return true;
                     }

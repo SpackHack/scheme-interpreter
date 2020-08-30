@@ -7,9 +7,9 @@ fn assert(check: bool, message: String) {
 }
 
 pub fn selftest() {
-    let o = ScmObject::NUMBER(123);
+    let o = ScmObject::Number(123);
     assert(
-        matches!(o,  ScmObject::NUMBER(number)),
+        matches!(o,  ScmObject::Number(number)),
         String::from("wrong Tag should be Number"),
     );
 }

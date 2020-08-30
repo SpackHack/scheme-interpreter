@@ -16,13 +16,13 @@ impl ScmEnvironment {
         }
     }
 
-    pub fn set_parrent_env(&mut self, env: &ScmEnvironment) {
+    pub fn set_parent_env(&mut self, env: &ScmEnvironment) {
         self.parent_env = Some(Box::from(env.clone()));
     }
 
     pub fn define(&mut self, key: ScmObject, value: &ScmObject) {
         for elem in self.bindings.iter_mut() {
-            if let ScmObject::CONS(cons) = elem {
+            if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
                     return;
@@ -34,7 +34,7 @@ impl ScmEnvironment {
 
     pub fn set(&mut self, key: ScmObject, value: ScmObject) {
         for elem in self.bindings.iter_mut() {
-            if let ScmObject::CONS(cons) = elem {
+            if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
                     break;
@@ -48,7 +48,7 @@ impl ScmEnvironment {
 
     pub fn get(&mut self, key: ScmObject) -> ScmObject {
         for elem in self.bindings.iter_mut() {
-            if let ScmObject::CONS(cons) = elem {
+            if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     return *cons.cdr.clone();
                 }
@@ -57,7 +57,7 @@ impl ScmEnvironment {
         if let Some(e) = self.parent_env.iter_mut().next() {
             return (*e).get(key);
         }
-        ScmObject::ERROR(String::from("Variable not found"))
+        ScmObject::Error(String::from("Variable not found"))
     }
 
     pub fn print() {}

@@ -61,7 +61,7 @@ pub fn read(mut stream: &mut ScmStream) -> ScmObject {
     } else if c == '(' {
         return read_list(stream);
     } else if is_end_of_file(c) {
-        return ScmObject::EOF;
+        return ScmObject::EndOfFile;
     }
 
     unread_char(&mut stream, c);
@@ -89,11 +89,11 @@ fn read_number(c: char, stream: &mut ScmStream) -> ScmObject {
                         number = number * -1;
                     }
                     unread_char(stream, c);
-                    break ScmObject::NUMBER(number);
+                    break ScmObject::Number(number);
                 }
             }
             None => {
-                break ScmObject::ERROR(String::from("Error in read Number"));
+                break ScmObject::Error(String::from("Error in read Number"));
             }
         }
     };
@@ -106,14 +106,14 @@ fn read_chars(stream: &mut ScmStream) -> ScmObject {
         match get_char(stream) {
             Some(c) => match c {
                 '"' => {
-                    break ScmObject::STRING(chars);
+                    break ScmObject::Chars(chars);
                 }
                 _ => {
                     chars.push(c);
                 }
             },
             None => {
-                break ScmObject::ERROR(String::from("Error in read chars"));
+                break ScmObject::Error(String::from("Error in read chars"));
             }
         }
     };
@@ -124,7 +124,7 @@ fn read_list(stream: &mut ScmStream) -> ScmObject {
     let c: char = skip_whitespace(stream);
 
     if c == ')' {
-        return ScmObject::NIL;
+        return ScmObject::Nil;
     }
     // End of file
 
@@ -188,20 +188,20 @@ fn read_hash(stream: &mut ScmStream) -> ScmObject {
         Some(c) => match c {
             'T' | 't' => {
                 // end
-                return ScmObject::TRUE;
+                return ScmObject::True;
             }
             'F' | 'f' => {
                 // end
-                return ScmObject::FALSE;
+                return ScmObject::False;
             }
             'N' | 'n' => {
                 // end
-                return ScmObject::NULL;
+                return ScmObject::Null;
             }
-            _ => return ScmObject::ERROR(String::from("Error in hash")),
+            _ => return ScmObject::Error(String::from("Error in hash")),
         },
         None => {
-            return ScmObject::ERROR(String::from("Error in read has"));
+            return ScmObject::Error(String::from("Error in read has"));
         }
     }
 }

@@ -27,45 +27,57 @@ pub fn display_or_print(scm: ScmObject, do_print: bool) {
 
 fn print(input: ScmObject, do_print: bool) {
     match input {
-        ScmObject::ERROR(error) => {
+        ScmObject::Error(error) => {
             print!("{}", error);
         }
-        ScmObject::NUMBER(numbers) => {
+        ScmObject::Number(numbers) => {
             print!("{}", numbers);
         }
-        ScmObject::STRING(chars) => {
+        ScmObject::Chars(chars) => {
             if do_print {
                 print!("\"{}\"", chars);
             } else {
                 print!("{}", chars);
             }
         }
-        ScmObject::CONS(cons) => {
+        ScmObject::Cons(cons) => {
             print!("(");
             print_list(cons);
         }
-        ScmObject::SYMBOL(symbole) => {
+        ScmObject::Symbol(symbole) => {
             print!("{}", symbole);
         }
-        ScmObject::TRUE => {
-            print!("#T");
+        ScmObject::Function(function) => {
+
         }
-        ScmObject::FALSE => {
-            print!("#F");
+        ScmObject::Syntax(syntax) => {
+            
         }
-        ScmObject::NULL => {
-            print!("#N");
-        }
-        ScmObject::USERFN(user_fn) => {
+        ScmObject::UserFunction(user_fn) => {
             print!("(lambda (",);
-            if let ScmObject::CONS(cons) = *user_fn.arg_list {
+            if let ScmObject::Cons(cons) = *user_fn.arg_list {
                 print_list(cons);
             }
             print!(" (");
-            if let ScmObject::CONS(cons) = *user_fn.body_list {
+            if let ScmObject::Cons(cons) = *user_fn.body_list {
                 print_list(cons);
             }
             print!(" )");
+        }
+        ScmObject::EndOfFile => {
+            print!("#EOF");
+        }
+        ScmObject::Null => {
+            print!("#N");
+        }
+        ScmObject::Void => {
+            print!("#V");
+        }
+        ScmObject::True => {
+            print!("#T");
+        }
+        ScmObject::False => {
+            print!("#F");
         }
         _ => print!("Print Not implemented"),
     }
@@ -77,7 +89,7 @@ fn print_list(list: Cons) {
     let cdr: ScmObject = *list.cdr;
 
     match cdr {
-        ScmObject::NIL => {
+        ScmObject::Nil => {
             print!(".\\)");
         }
         _ => {

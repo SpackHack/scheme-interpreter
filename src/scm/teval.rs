@@ -8,7 +8,7 @@ static mut RETURN_STACK: Stack<ReturnFunction> = Stack::new(100);
 static mut ENV_STACK: Stack<ScmEnvironment> = Stack::new(100);
 static mut ENV_COUNTER: Vec<i64> = vec![];
 
-static mut RETURN_VALUE: ScmObject = ScmObject::NIL;
+static mut RETURN_VALUE: ScmObject = ScmObject::Nil;
 
 fn pop() -> ScmObject {
     unsafe {
@@ -127,11 +127,11 @@ fn t_eval() -> Option<ReturnFunction> {
     let a = expression.clone();
 
     match a {
-        ScmObject::SYMBOL(_) => {
+        ScmObject::Symbol(_) => {
             set_return_value(env.get(expression));
             return pop_re();
         }
-        ScmObject::CONS(cons) => {
+        ScmObject::Cons(cons) => {
             push_env(&env, false);
             push(expression);
             push_env(&env, false);
@@ -150,9 +150,9 @@ fn t_eval2() -> Option<ReturnFunction> {
     let expression: ScmObject = pop();
     let env: ScmEnvironment = pop_env();
 
-    if let ScmObject::CONS(cons) = expression {
+    if let ScmObject::Cons(cons) = expression {
         match &func_or_syntax {
-            ScmObject::FN(_) => {
+            ScmObject::Function(_) => {
                 push_env(&env, false);
                 push(func_or_syntax);
                 push(*cons.cdr);
@@ -164,7 +164,7 @@ fn t_eval2() -> Option<ReturnFunction> {
                 push(*cons.cdr);
                 return Some(ReturnFunction::new(build_in_syntax));
             }
-            ScmObject::USERFN(_) => {
+            ScmObject::UserFunction(_) => {
                 push_env(&env, false);
                 push(func_or_syntax);
                 push(*cons.cdr);
@@ -173,7 +173,7 @@ fn t_eval2() -> Option<ReturnFunction> {
             _ => {}
         }
     }
-    set_return_value(ScmObject::ERROR(String::from("Not a valid function")));
+    set_return_value(ScmObject::Error(String::from("Not a valid function")));
     return None;
 }
 
@@ -182,9 +182,9 @@ fn build_in_function() -> Option<ReturnFunction> {
     let func: ScmObject = pop();
     let env = pop_env();
 
-    let stack_index_of_first_arg = ScmObject::NUMBER(get_stack_size() as i64);
+    let stack_index_of_first_arg = ScmObject::Number(get_stack_size() as i64);
 
-    if let ScmObject::CONS(cons) = args {
+    if let ScmObject::Cons(cons) = args {
         push(stack_index_of_first_arg.clone());
         push(*cons.cdr);
         push(func.clone());
@@ -212,7 +212,7 @@ fn build_in_function1() -> Option<ReturnFunction> {
 
     push(next_argument);
 
-    if let ScmObject::CONS(cons) = args {
+    if let ScmObject::Cons(cons) = args {
         push(stack_index_of_first_arg.clone());
         push(*cons.cdr);
         push(func.clone());
@@ -239,10 +239,10 @@ fn build_in_function2() -> Option<ReturnFunction> {
 
     let mut arg_count = get_stack_size() as i64 - index_first_arg;
 
-    if let ScmObject::FN(func) = func {
+    if let ScmObject::Function(func) = func {
         if let Some(num_args) = func.num_args {
             if num_args != arg_count {
-                set_return_value(ScmObject::ERROR(String::from(
+                set_return_value(ScmObject::Error(String::from(
                     "fn: not the right amount of arguments.",
                 )));
                 return None;
@@ -258,11 +258,11 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     arg_count -= 1;
                     match arg {
                         // TODO: overflow
-                        ScmObject::NUMBER(number) => {
+                        ScmObject::Number(number) => {
                             sum += number;
                         }
                         _ => {
-                            set_return_value(ScmObject::ERROR(String::from(
+                            set_return_value(ScmObject::Error(String::from(
                                 "fn +: arg not a number",
                             )));
                             return None;
@@ -270,7 +270,7 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     }
                 }
 
-                set_return_value(ScmObject::NUMBER(sum));
+                set_return_value(ScmObject::Number(sum));
                 return pop_re();
             }
             BuildInFunction::Minus => {
@@ -281,11 +281,11 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     arg_count -= 1;
                     match arg {
                         // TODO: overflow
-                        ScmObject::NUMBER(number) => {
+                        ScmObject::Number(number) => {
                             sum -= number;
                         }
                         _ => {
-                            set_return_value(ScmObject::ERROR(String::from(
+                            set_return_value(ScmObject::Error(String::from(
                                 "fn -: arg not a number",
                             )));
                             return None;
@@ -295,34 +295,41 @@ fn build_in_function2() -> Option<ReturnFunction> {
 
                 arg = pop();
 
-                if let ScmObject::NUMBER(number) = arg {
+                if let ScmObject::Number(number) = arg {
                     sum += number;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from("fn -: arg not a number")));
+                    set_return_value(ScmObject::Error(String::from("fn -: arg not a number")));
                     return None;
                 }
 
-                set_return_value(ScmObject::NUMBER(sum));
+                set_return_value(ScmObject::Number(sum));
                 return pop_re();
             }
             BuildInFunction::Display => {
-                t_print(false, arg_count, index_first_arg);
+                t_print(false, index_first_arg);
                 set_return_value(ScmObject::Void);
                 return pop_re();
             }
             BuildInFunction::Print => {
-                t_print(true, arg_count, index_first_arg);
+                t_print(true, index_first_arg);
                 set_return_value(ScmObject::Void);
                 return pop_re();
             }
-            _ => {}
+            _ => {
+                set_return_value(ScmObject::Error(String::from(
+                    "fn: is not impl",
+                )));
+                return None;
+            }
         }
     }
-
+    set_return_value(ScmObject::Error(String::from(
+        "fn: is not a function",
+    )));
     return None;
 }
 
-fn t_print(is_print: bool, arg_count: i64, stack_index_of_first_arg: i64) {
+fn t_print(is_print: bool, stack_index_of_first_arg: i64) {
     while let Some(s) = get_stack_element(stack_index_of_first_arg) {
         display_or_print(s, is_print);
     }
@@ -338,21 +345,21 @@ fn build_in_syntax() -> Option<ReturnFunction> {
             BuildInSyntax::Quote => {
                 let argument: ScmObject;
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     argument = *cons.car;
                     args = *cons.cdr
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "quote: need 1 argument but has 0",
                     )));
                     return None;
                 }
 
-                if let ScmObject::NIL = args {
+                if let ScmObject::Nil = args {
                     set_return_value(argument);
                     return pop_re();
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "quote: only 1 argument allowed",
                     )));
                     return None;
@@ -362,37 +369,37 @@ fn build_in_syntax() -> Option<ReturnFunction> {
                 let synonym: ScmObject;
                 let value: ScmObject;
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     synonym = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "define: need 2 argument but has 0",
                     )));
                     return None;
                 }
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     value = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "define: need 2 argument but has 1",
                     )));
                     return None;
                 }
 
-                if let ScmObject::SYMBOL(_) = &synonym {
+                if let ScmObject::Symbol(_) = &synonym {
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "define: synonym is not a symbol",
                     )));
                     return None;
                 }
 
-                if let ScmObject::NIL = args {
+                if let ScmObject::Nil = args {
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "define: need exactly 2 argument but has more",
                     )));
                     return None;
@@ -409,37 +416,37 @@ fn build_in_syntax() -> Option<ReturnFunction> {
                 let synonym: ScmObject;
                 let value: ScmObject;
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     synonym = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "set: need 2 argument but has 0",
                     )));
                     return None;
                 }
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     value = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "set: need 2 argument but has 1",
                     )));
                     return None;
                 }
 
-                if let ScmObject::SYMBOL(_) = &synonym {
+                if let ScmObject::Symbol(_) = &synonym {
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "set: synonym is not a symbol",
                     )));
                     return None;
                 }
 
-                if let ScmObject::NIL = args {
+                if let ScmObject::Nil = args {
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "set: need exactly 2 argument but has more",
                     )));
                     return None;
@@ -456,18 +463,18 @@ fn build_in_syntax() -> Option<ReturnFunction> {
                 let arglist: ScmObject;
                 let body: ScmObject;
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     arglist = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "lambda: need at least 2 argument, but has 0",
                     )));
                     return None;
                 }
 
-                if let ScmObject::NIL = args {
-                    set_return_value(ScmObject::ERROR(String::from(
+                if let ScmObject::Nil = args {
+                    set_return_value(ScmObject::Error(String::from(
                         "lambda: need at least 2 argument, but has 1",
                     )));
                     return None;
@@ -481,22 +488,22 @@ fn build_in_syntax() -> Option<ReturnFunction> {
             BuildInSyntax::Begin => {
                 let next_expression: ScmObject;
 
-                if let ScmObject::NIL = &args {
+                if let ScmObject::Nil = &args {
                     set_return_value(ScmObject::Void);
                     return pop_re();
                 }
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     next_expression = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "begin: need at least 1 argument but has 0",
                     )));
                     return None;
                 }
 
                 push_env(&env, false);
-                if let ScmObject::NIL = args {
+                if let ScmObject::Nil = args {
                     push(next_expression);
                     return Some(ReturnFunction::new(t_eval));
                 }
@@ -511,37 +518,37 @@ fn build_in_syntax() -> Option<ReturnFunction> {
                 let true_expression: ScmObject;
                 let false_expression: ScmObject;
 
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     condition = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "if: need 3 argument but has 0",
                     )));
                     return None;
                 }
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     true_expression = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "if: need 3 argument but has 1",
                     )));
                     return None;
                 }
-                if let ScmObject::CONS(cons) = args {
+                if let ScmObject::Cons(cons) = args {
                     false_expression = *cons.car;
                     args = *cons.cdr;
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "if: need 3 argument but has 2",
                     )));
                     return None;
                 }
 
-                if let ScmObject::NIL = args {
+                if let ScmObject::Nil = args {
                 } else {
-                    set_return_value(ScmObject::ERROR(String::from(
+                    set_return_value(ScmObject::Error(String::from(
                         "if: need exactly 3 argument but has more",
                     )));
                     return None;
@@ -591,14 +598,14 @@ fn t_begin() -> Option<ReturnFunction> {
 
     let expression: ScmObject;
 
-    if let ScmObject::CONS(cons) = args {
+    if let ScmObject::Cons(cons) = args {
         expression = *cons.car;
         args = *cons.cdr;
     } else {
         panic!("Begin has no args");
     }
 
-    if let ScmObject::NIL = args {
+    if let ScmObject::Nil = args {
         push_env(&env, false);
         push(expression);
         return Some(ReturnFunction::new(t_eval));
@@ -617,7 +624,7 @@ fn t_if() -> Option<ReturnFunction> {
     let false_expression: ScmObject = pop();
     let true_expression: ScmObject = pop();
 
-    if get_return_value().equal(&ScmObject::TRUE) {
+    if get_return_value().equal(&ScmObject::True) {
         push(true_expression);
     } else {
         push(false_expression);
@@ -630,8 +637,8 @@ fn t_user_function() -> Option<ReturnFunction> {
     let function = pop();
     let env = pop_env();
 
-    if let ScmObject::CONS(cons) = args {
-        let start_index = ScmObject::NUMBER(get_stack_size() as i64);
+    if let ScmObject::Cons(cons) = args {
+        let start_index = ScmObject::Number(get_stack_size() as i64);
 
         push(start_index);
         push(function);
@@ -644,13 +651,13 @@ fn t_user_function() -> Option<ReturnFunction> {
     }
 
     let mut new_env = ScmEnvironment::new();
-    new_env.set_parrent_env(&env);
+    new_env.set_parent_env(&env);
 
-    if let ScmObject::USERFN(func) = function {
-        if let ScmObject::NIL = *func.arg_list {
+    if let ScmObject::UserFunction(func) = function {
+        if let ScmObject::Nil = *func.arg_list {
             match *func.body_list {
-                ScmObject::CONS(cons) => {
-                    if let ScmObject::NIL = *cons.cdr {
+                ScmObject::Cons(cons) => {
+                    if let ScmObject::Nil = *cons.cdr {
                         push_env(&new_env, true);
                         push(*cons.car);
                         return Some(ReturnFunction::new(t_eval));
@@ -663,12 +670,12 @@ fn t_user_function() -> Option<ReturnFunction> {
                     return Some(ReturnFunction::new(t_eval));
                 }
                 _ => {
-                    set_return_value(ScmObject::ERROR(String::from("user fn: body is empty")));
+                    set_return_value(ScmObject::Error(String::from("user fn: body is empty")));
                     return None;
                 }
             }
         } else {
-            set_return_value(ScmObject::ERROR(String::from("user fn: expects arguments")));
+            set_return_value(ScmObject::Error(String::from("user fn: expects arguments")));
             return None;
         }
     }
@@ -684,7 +691,7 @@ fn t_user_function1() -> Option<ReturnFunction> {
 
     push(get_return_value());
 
-    if let ScmObject::CONS(cons) = args {
+    if let ScmObject::Cons(cons) = args {
         push(start_index);
         push(function);
         push(*cons.cdr);
@@ -696,35 +703,35 @@ fn t_user_function1() -> Option<ReturnFunction> {
     }
 
     let mut new_env = ScmEnvironment::new();
-    new_env.set_parrent_env(&env);
+    new_env.set_parent_env(&env);
 
-    if let ScmObject::USERFN(func) = function {
+    if let ScmObject::UserFunction(func) = function {
         let stack_index_of_arg = start_index.get_number();
         let mut arg_names = *func.arg_list;
 
-        while let ScmObject::CONS(cons) = arg_names {
+        while let ScmObject::Cons(cons) = arg_names {
             if let Some(s) = get_stack_element(stack_index_of_arg) {
                 new_env.define(*cons.car, &s);
                 arg_names = *cons.cdr;
             } else {
-                set_return_value(ScmObject::ERROR(String::from(
+                set_return_value(ScmObject::Error(String::from(
                     "user fn: not enough Arguments",
                 )));
                 return None;
             }
         }
         if stack_index_of_arg < get_stack_size() as i64 {
-            set_return_value(ScmObject::ERROR(String::from("user fn: to many Arguments")));
+            set_return_value(ScmObject::Error(String::from("user fn: to many Arguments")));
             return None;
         }
-        if let ScmObject::NIL = *func.body_list {
-            set_return_value(ScmObject::ERROR(String::from("user fn: body is empty")));
+        if let ScmObject::Nil = *func.body_list {
+            set_return_value(ScmObject::Error(String::from("user fn: body is empty")));
             return None;
         }
 
-        if let ScmObject::CONS(cons) = *func.body_list {
+        if let ScmObject::Cons(cons) = *func.body_list {
             push_env(&new_env, true);
-            if let ScmObject::NIL = *cons.cdr {
+            if let ScmObject::Nil = *cons.cdr {
                 push(*cons.car);
                 return Some(ReturnFunction::new(t_eval));
             }
@@ -736,7 +743,7 @@ fn t_user_function1() -> Option<ReturnFunction> {
         } else {
         }
     }
-    set_return_value(ScmObject::ERROR(String::from("user fn: is not a function")));
+    set_return_value(ScmObject::Error(String::from("user fn: is not a function")));
     return None;
 }
 
@@ -744,8 +751,8 @@ fn t_user_function2() -> Option<ReturnFunction> {
     let body = pop();
     let env = pop_env();
 
-    if let ScmObject::CONS(cons) = body {
-        if let ScmObject::NIL = *cons.cdr {
+    if let ScmObject::Cons(cons) = body {
+        if let ScmObject::Nil = *cons.cdr {
             push_env(&env, false);
             push(*cons.car);
             return Some(ReturnFunction::new(t_eval));
@@ -757,6 +764,6 @@ fn t_user_function2() -> Option<ReturnFunction> {
         push_re(ReturnFunction::new(t_user_function2));
         return Some(ReturnFunction::new(t_eval));
     }
-    set_return_value(ScmObject::ERROR(String::from("user fn: body is empty")));
+    set_return_value(ScmObject::Error(String::from("user fn: body is empty")));
     return None;
 }

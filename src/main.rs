@@ -12,9 +12,6 @@ fn main() {
     scm::selftest::selftest();
     let mut init: bool = false;
     let mut show_time: bool = false;
-    // unsafe {scm::memory::init_singeltons()};
-
-    // unsafe {scm::memory::new_symbole(String::from("symbole: String"))};
     let args: Vec<String> = env::args().collect();
 
     let mut input_stream: ScmStream = ScmStream::new_stdin();
@@ -60,7 +57,7 @@ fn main() {
 fn run(mut stream: ScmStream, mut env: ScmEnvironment, show_time: bool) -> ScmEnvironment {
     loop {
         let input: ScmObject = scm::reader::read(&mut stream);
-        if let ScmObject::EOF = input {
+        if let ScmObject::EndOfFile = input {
             break;
         }
         let start = SystemTime::now();
@@ -83,32 +80,32 @@ fn run(mut stream: ScmStream, mut env: ScmEnvironment, show_time: bool) -> ScmEn
 
 fn init_build_in(env: &mut ScmEnvironment) {
     env.define(
-        ScmObject::SYMBOL(String::from("quote")),
+        ScmObject::Symbol(String::from("quote")),
         &ScmObject::new_syntax(BuildInSyntax::Quote, String::from("Syntax Quota"), 1),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("define")),
+        ScmObject::Symbol(String::from("define")),
         &ScmObject::new_syntax(BuildInSyntax::Define, String::from("Syntax define"), 2),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("set")),
+        ScmObject::Symbol(String::from("set")),
         &ScmObject::new_syntax(BuildInSyntax::Set, String::from("Syntax set"), 2),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("lambda")),
+        ScmObject::Symbol(String::from("lambda")),
         &ScmObject::new_syntax(BuildInSyntax::Lambda, String::from("Syntax lambda"), 2),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("if")),
+        ScmObject::Symbol(String::from("if")),
         &ScmObject::new_syntax(BuildInSyntax::If, String::from("Syntax if"), 3),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("begin")),
+        ScmObject::Symbol(String::from("begin")),
         &ScmObject::new_syntax(BuildInSyntax::Begin, String::from("Syntax begin"), 3),
     );
 
     env.define(
-        ScmObject::SYMBOL(String::from("+")),
+        ScmObject::Symbol(String::from("+")),
         &ScmObject::new_fn(
             BuildInFunction::Plus,
             String::from("FN Plus"),
@@ -116,7 +113,7 @@ fn init_build_in(env: &mut ScmEnvironment) {
         ),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("-")),
+        ScmObject::Symbol(String::from("-")),
         &ScmObject::new_fn(
             BuildInFunction::Minus,
             String::from("-"),
@@ -124,7 +121,7 @@ fn init_build_in(env: &mut ScmEnvironment) {
         ),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("display")),
+        ScmObject::Symbol(String::from("display")),
         &ScmObject::new_fn(
             BuildInFunction::Display,
             String::from("display"),
@@ -132,7 +129,7 @@ fn init_build_in(env: &mut ScmEnvironment) {
         ),
     );
     env.define(
-        ScmObject::SYMBOL(String::from("print")),
+        ScmObject::Symbol(String::from("print")),
         &ScmObject::new_fn(
             BuildInFunction::Print,
             String::from("print"),
