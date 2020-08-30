@@ -8,5 +8,12 @@
 (define w 2)
 (define e 3)
 
-(define a (lambda (a) (a) ) )
-(define plus (lambda (y x) (+ (+ 1 1) x)))
+(define a (lambda (q) q) )
+(define b (lambda (q) (q)) )
+(define plus (lambda (y x) (+ y x)))
+(define plus1 (lambda (y) (+ y 1)))
+
+
+(define test 10)
+
+(define func (lambda (a) (+ test a)))

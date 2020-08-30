@@ -10,7 +10,6 @@ pub fn print_result(input: ScmObject) {
             io::stdout().flush().unwrap();
             print!("> ");
             print(input, true);
-            println!();
         }
     }
 }
@@ -22,7 +21,6 @@ pub fn display_or_print(scm: ScmObject, do_print: bool) {
         _ => {
             io::stdout().flush().unwrap();
             print(scm, do_print);
-            println!();
         }
     }
 }

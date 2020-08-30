@@ -1,7 +1,7 @@
 use super::environment::*;
+use super::printer::display_or_print;
 use super::scm_object::*;
 use super::stack::*;
-use super::printer::display_or_print;
 
 static mut STACK: Stack<ScmObject> = Stack::new(100);
 static mut RETURN_STACK: Stack<ReturnFunction> = Stack::new(100);
@@ -23,7 +23,11 @@ fn push(scm: ScmObject) {
     unsafe { STACK.push(scm) }
 }
 
-fn get_Stack_Size() -> usize {
+fn get_stack_element(index: i64) -> Option<ScmObject> {
+    unsafe { STACK.get(index) }
+}
+
+fn get_stack_size() -> usize {
     unsafe { STACK.get_length() }
 }
 
@@ -101,7 +105,7 @@ impl ReturnFunction {
 }
 
 pub fn eval(input: ScmObject, env: ScmEnvironment) -> (ScmObject, ScmEnvironment) {
-    push_env(&env, false); // for line 102
+    push_env(&env, false); // for return env
     push_env(&env, false);
     push(input);
     return (trampolin(t_eval), pop_env());
@@ -123,7 +127,7 @@ fn t_eval() -> Option<ReturnFunction> {
     let a = expression.clone();
 
     match a {
-        ScmObject::SYMBOL(symbol) => {
+        ScmObject::SYMBOL(_) => {
             set_return_value(env.get(expression));
             return pop_re();
         }
@@ -148,30 +152,28 @@ fn t_eval2() -> Option<ReturnFunction> {
 
     if let ScmObject::CONS(cons) = expression {
         match &func_or_syntax {
-            ScmObject::FN(function) => {
+            ScmObject::FN(_) => {
                 push_env(&env, false);
                 push(func_or_syntax);
                 push(*cons.cdr);
                 return Some(ReturnFunction::new(build_in_function));
             }
-            ScmObject::Syntax(syntax) => {
+            ScmObject::Syntax(_) => {
                 push_env(&env, false);
                 push(func_or_syntax);
                 push(*cons.cdr);
                 return Some(ReturnFunction::new(build_in_syntax));
             }
-            ScmObject::USERFN(function) => {
+            ScmObject::USERFN(_) => {
                 push_env(&env, false);
                 push(func_or_syntax);
                 push(*cons.cdr);
-                return Some(ReturnFunction::new(user_function));
+                return Some(ReturnFunction::new(t_user_function));
             }
             _ => {}
         }
     }
-    set_return_value(ScmObject::ERROR(String::from(
-        "Not a valid function",
-    )));
+    set_return_value(ScmObject::ERROR(String::from("Not a valid function")));
     return None;
 }
 
@@ -180,7 +182,7 @@ fn build_in_function() -> Option<ReturnFunction> {
     let func: ScmObject = pop();
     let env = pop_env();
 
-    let stack_index_of_first_arg = ScmObject::NUMBER(get_Stack_Size() as i64);
+    let stack_index_of_first_arg = ScmObject::NUMBER(get_stack_size() as i64);
 
     if let ScmObject::CONS(cons) = args {
         push(stack_index_of_first_arg.clone());
@@ -233,7 +235,9 @@ fn build_in_function2() -> Option<ReturnFunction> {
     let func: ScmObject = pop();
     let stack_index_of_first_arg = pop();
 
-    let mut arg_count = get_Stack_Size() as i64 - stack_index_of_first_arg.getNumber();
+    let index_first_arg = stack_index_of_first_arg.get_number();
+
+    let mut arg_count = get_stack_size() as i64 - index_first_arg;
 
     if let ScmObject::FN(func) = func {
         if let Some(num_args) = func.num_args {
@@ -302,12 +306,12 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 return pop_re();
             }
             BuildInFunction::Display => {
-                t_print(false, arg_count);
+                t_print(false, arg_count, index_first_arg);
                 set_return_value(ScmObject::Void);
                 return pop_re();
             }
             BuildInFunction::Print => {
-                t_print(true, arg_count);
+                t_print(true, arg_count, index_first_arg);
                 set_return_value(ScmObject::Void);
                 return pop_re();
             }
@@ -318,17 +322,10 @@ fn build_in_function2() -> Option<ReturnFunction> {
     return None;
 }
 
-fn t_print(is_print: bool, mut arg_count: i64) {
-    // TODO: reverse
-    let mut expr: ScmObject;
-
-    while arg_count > 0 {
-        expr = pop();
-        arg_count -= 1;
-        display_or_print(expr, is_print);
+fn t_print(is_print: bool, arg_count: i64, stack_index_of_first_arg: i64) {
+    while let Some(s) = get_stack_element(stack_index_of_first_arg) {
+        display_or_print(s, is_print);
     }
-
-
 }
 
 fn build_in_syntax() -> Option<ReturnFunction> {
@@ -469,13 +466,13 @@ fn build_in_syntax() -> Option<ReturnFunction> {
                     return None;
                 }
 
-                if let ScmObject::CONS(cons) = args {
-                    body = *cons.car;
-                } else {
+                if let ScmObject::NIL = args {
                     set_return_value(ScmObject::ERROR(String::from(
                         "lambda: need at least 2 argument, but has 1",
                     )));
                     return None;
+                } else {
+                    body = args;
                 }
 
                 set_return_value(ScmObject::new_user_fn(None, arglist, body, env));
@@ -568,7 +565,7 @@ fn t_define() -> Option<ReturnFunction> {
     let synonym = pop();
     let mut env = pop_env();
 
-    env.define(synonym, get_return_value());
+    env.define(synonym, &get_return_value());
 
     update_env(env);
 
@@ -589,8 +586,31 @@ fn t_set() -> Option<ReturnFunction> {
 }
 
 fn t_begin() -> Option<ReturnFunction> {
-    // TODO
-    return None;
+    let mut args = pop();
+    let env = pop_env();
+
+    let expression: ScmObject;
+
+    if let ScmObject::CONS(cons) = args {
+        expression = *cons.car;
+        args = *cons.cdr;
+    } else {
+        panic!("Begin has no args");
+    }
+
+    if let ScmObject::NIL = args {
+        push_env(&env, false);
+        push(expression);
+        return Some(ReturnFunction::new(t_eval));
+    }
+    push_env(&env, false);
+    push(args);
+
+    let re = eval(expression.clone(), env);
+    push_env(&re.1, false);
+    push(expression);
+    push_re(ReturnFunction::new(t_begin));
+    return Some(ReturnFunction::new(t_eval));
 }
 
 fn t_if() -> Option<ReturnFunction> {
@@ -605,6 +625,138 @@ fn t_if() -> Option<ReturnFunction> {
     return Some(ReturnFunction::new(t_eval));
 }
 
-fn user_function() -> Option<ReturnFunction> {
+fn t_user_function() -> Option<ReturnFunction> {
+    let args = pop();
+    let function = pop();
+    let env = pop_env();
+
+    if let ScmObject::CONS(cons) = args {
+        let start_index = ScmObject::NUMBER(get_stack_size() as i64);
+
+        push(start_index);
+        push(function);
+        push(*cons.cdr);
+        push_env(&env, false);
+        push_env(&env, false);
+        push(*cons.car);
+        push_re(ReturnFunction::new(t_user_function1));
+        return Some(ReturnFunction::new(t_eval));
+    }
+
+    let mut new_env = ScmEnvironment::new();
+    new_env.set_parrent_env(&env);
+
+    if let ScmObject::USERFN(func) = function {
+        if let ScmObject::NIL = *func.arg_list {
+            match *func.body_list {
+                ScmObject::CONS(cons) => {
+                    if let ScmObject::NIL = *cons.cdr {
+                        push_env(&new_env, true);
+                        push(*cons.car);
+                        return Some(ReturnFunction::new(t_eval));
+                    }
+                    push_env(&new_env, true);
+                    push(*cons.cdr);
+                    push_env(&new_env, false);
+                    push(*cons.car);
+                    push_re(ReturnFunction::new(t_user_function2));
+                    return Some(ReturnFunction::new(t_eval));
+                }
+                _ => {
+                    set_return_value(ScmObject::ERROR(String::from("user fn: body is empty")));
+                    return None;
+                }
+            }
+        } else {
+            set_return_value(ScmObject::ERROR(String::from("user fn: expects arguments")));
+            return None;
+        }
+    }
+
+    return None;
+}
+
+fn t_user_function1() -> Option<ReturnFunction> {
+    let env = pop_env();
+    let args = pop();
+    let function = pop();
+    let start_index = pop();
+
+    push(get_return_value());
+
+    if let ScmObject::CONS(cons) = args {
+        push(start_index);
+        push(function);
+        push(*cons.cdr);
+        push_env(&env, false);
+        push_env(&env, false);
+        push(*cons.car);
+        push_re(ReturnFunction::new(t_user_function1));
+        return Some(ReturnFunction::new(t_eval));
+    }
+
+    let mut new_env = ScmEnvironment::new();
+    new_env.set_parrent_env(&env);
+
+    if let ScmObject::USERFN(func) = function {
+        let stack_index_of_arg = start_index.get_number();
+        let mut arg_names = *func.arg_list;
+
+        while let ScmObject::CONS(cons) = arg_names {
+            if let Some(s) = get_stack_element(stack_index_of_arg) {
+                new_env.define(*cons.car, &s);
+                arg_names = *cons.cdr;
+            } else {
+                set_return_value(ScmObject::ERROR(String::from(
+                    "user fn: not enough Arguments",
+                )));
+                return None;
+            }
+        }
+        if stack_index_of_arg < get_stack_size() as i64 {
+            set_return_value(ScmObject::ERROR(String::from("user fn: to many Arguments")));
+            return None;
+        }
+        if let ScmObject::NIL = *func.body_list {
+            set_return_value(ScmObject::ERROR(String::from("user fn: body is empty")));
+            return None;
+        }
+
+        if let ScmObject::CONS(cons) = *func.body_list {
+            push_env(&new_env, true);
+            if let ScmObject::NIL = *cons.cdr {
+                push(*cons.car);
+                return Some(ReturnFunction::new(t_eval));
+            }
+            push(*cons.cdr);
+            push_env(&new_env, false);
+            push(*cons.car);
+            push_re(ReturnFunction::new(t_user_function2));
+            return Some(ReturnFunction::new(t_eval));
+        } else {
+        }
+    }
+    set_return_value(ScmObject::ERROR(String::from("user fn: is not a function")));
+    return None;
+}
+
+fn t_user_function2() -> Option<ReturnFunction> {
+    let body = pop();
+    let env = pop_env();
+
+    if let ScmObject::CONS(cons) = body {
+        if let ScmObject::NIL = *cons.cdr {
+            push_env(&env, false);
+            push(*cons.car);
+            return Some(ReturnFunction::new(t_eval));
+        }
+        push_env(&env, false);
+        push(*cons.cdr);
+        push_env(&env, false);
+        push(*cons.car);
+        push_re(ReturnFunction::new(t_user_function2));
+        return Some(ReturnFunction::new(t_eval));
+    }
+    set_return_value(ScmObject::ERROR(String::from("user fn: body is empty")));
     return None;
 }

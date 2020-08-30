@@ -20,16 +20,16 @@ impl ScmEnvironment {
         self.parent_env = Some(Box::from(env.clone()));
     }
 
-    pub fn define(&mut self, key: ScmObject, value: ScmObject) {
+    pub fn define(&mut self, key: ScmObject, value: &ScmObject) {
         for elem in self.bindings.iter_mut() {
             if let ScmObject::CONS(cons) = elem {
                 if (*cons.car).equal(&key) {
-                    *cons.cdr = value;
+                    *cons.cdr = value.clone();
                     return;
                 }
             }
         }
-        &self.bindings.push(ScmObject::new_cons(key, value));
+        &self.bindings.push(ScmObject::new_cons(key, value.clone()));
     }
 
     pub fn set(&mut self, key: ScmObject, value: ScmObject) {

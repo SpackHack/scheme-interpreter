@@ -150,7 +150,7 @@ impl ScmObject {
         })
     }
 
-    pub fn getNumber(&self) -> i64 {
+    pub fn get_number(&self) -> i64 {
         if let ScmObject::NUMBER(n) = self {
             return *n;
         }
