@@ -26,4 +26,7 @@ impl<T> Stack<T> {
         None
     }
 
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
 }

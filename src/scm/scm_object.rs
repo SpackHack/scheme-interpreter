@@ -25,7 +25,7 @@ pub struct Cons {
     pub cdr: Box<ScmObject>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct ScmBuildInFunction {
     pub tag: BuildInFunction,
     pub name: String,
@@ -36,52 +36,45 @@ pub enum NumArgs {
     Unlimited = -1,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum BuildInFunction {
     Plus,
     Minus,
     Display,
     Print,
     PrintEnv,
-    // FN_PLUS,
-    // FN_MINUS,
-    // FN_DISPLAY,
-    // FN_PRINT,
-
-    // FN_TIMES,
-    // FN_CONS,
-    // FN_CAR,
-    // FN_CDR,
-    // FN_EQ,
-    // FN_GT,
-    // FN_LT,
-    // FN_STRINGQ,
-    // FN_STRINGEQ,
-    // FN_CONSQ,
-    // FN_NUMBERQ,
-    // FN_FUNCTIONQ,
-    // FN_USER_DEFINED_FUNCTIONQ,
-    // FN_EQNR,
-    // FN_FUNCTION_BODY,
-    // FN_FUNCTION_ARGLIST,
-    // FN_LIST,
-    
-    // FN_LOAD,
-    // FN_OPEN_FOR_READING,
-    // FN_CLOSE,
-    // FN_READ,
-    // FN_READ_CHAR,
-    // FN_READ_LINE,
+    Times,
+    Cons,
+    Car,
+    Cdr,
+    Equal,
+    Gt,
+    IsChars,
+    IsCons,
+    IsNumber,
+    IsFunction,
+    IsSyntax,
+    IsUserFunctions,
+    EqualNumber,
+    FnBody,
+    FnArg,
+    List,
+    Load,
+    Open,
+    Close,
+    Read,
+    ReadChar,
+    ReadLine,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct ScmBuildInSyntax {
     pub tag: BuildInSyntax,
     pub name: String,
     pub num_args: i64,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum BuildInSyntax {
     Quote,
     Lambda,
@@ -119,7 +112,6 @@ impl ScmObject {
             tag: tag,
             name: name,
             num_args: args,
-            
         })
     }
 
@@ -154,17 +146,37 @@ impl ScmObject {
 
     pub fn equal(&self, scm: &ScmObject) -> bool {
         match self {
-            ScmObject::False => {
-                if let ScmObject::False = scm {
-                    return true;
-                }
-                false
+            ScmObject::Error(_) => {
+                return false;
             }
-            ScmObject::True => {
-                if let ScmObject::True = scm {
+            ScmObject::Number(number) => {
+                if let ScmObject::Number(num) = scm {
+                    if number == num {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            ScmObject::Chars(chars) => {
+                if let ScmObject::Chars(ch) = scm {
+                    if chars == ch {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            ScmObject::Cons(cons) => {
+                //TODO: cons equal
+                if let ScmObject::Cons(co) = scm {
                     return true;
                 }
-                false
+                return false;
+            }
+            ScmObject::Nil => {
+                if let ScmObject::Null = scm {
+                    return true;
+                }
+                return false;
             }
             ScmObject::Symbol(symbole) => {
                 if let ScmObject::Symbol(s) = &scm {
@@ -174,7 +186,65 @@ impl ScmObject {
                 }
                 false
             }
-            _ => false,
+            ScmObject::Function(function) => {
+                if let ScmObject::Function(func) = scm {
+                    if function == func {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            ScmObject::Syntax(syntax) => {
+                if let ScmObject::Syntax(sy) = scm {
+                    if syntax == sy {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            ScmObject::UserFunction(function) => {
+                //TODO: user function equal
+                if let ScmObject::UserFunction(func) = scm {
+                    return true;
+                }
+                return false;
+            }
+            ScmObject::EndOfFile => {
+                if let ScmObject::EndOfFile = scm {
+                    return true;
+                }
+                return false;
+            }
+            ScmObject::None => {
+                if let ScmObject::None = scm {
+                    return true;
+                }
+                return false;
+            }
+            ScmObject::Null => {
+                if let ScmObject::Null = scm {
+                    return true;
+                }
+                return false;
+            }
+            ScmObject::Void => {
+                if let ScmObject::Void = scm {
+                    return true;
+                }
+                return false;
+            }
+            ScmObject::True => {
+                if let ScmObject::True = scm {
+                    return true;
+                }
+                false
+            }
+            ScmObject::False => {
+                if let ScmObject::False = scm {
+                    return true;
+                }
+                false
+            }
         }
     }
 }

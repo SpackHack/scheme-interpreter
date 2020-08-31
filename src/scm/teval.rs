@@ -96,6 +96,16 @@ fn env_down() {
     }
 }
 
+fn clear_all_stacks() {
+    unsafe {
+        STACK.clear();
+        RETURN_STACK.clear();
+        ENV_STACK.clear();
+        ENV_LEVEL = 1;
+        ENV_COUNTER.clear();
+    }
+}
+
 fn set_return_value(value: ScmObject) {
     unsafe { RETURN_VALUE = value }
 }
@@ -118,7 +128,11 @@ pub fn eval(input: ScmObject, env: ScmEnvironment) -> (ScmObject, ScmEnvironment
     push_env(&env, false); // for return env
     push_env(&env, false);
     push(input);
-    return (trampolin(t_eval), pop_env());
+
+    let re = trampolin(t_eval);
+    let env = pop_env();
+    clear_all_stacks();
+    return (re, env);
 }
 
 fn trampolin(function: fn() -> Option<ReturnFunction>) -> ScmObject {
@@ -330,9 +344,214 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 set_return_value(ScmObject::Void);
                 return pop_re();
             }
-            _ => {
-                set_return_value(ScmObject::Error(String::from("fn: is not impl")));
+            BuildInFunction::Times => {
+                let mut product = 1;
+                let mut arg;
+                while arg_count > 0 {
+                    // TODO: overflow
+                    arg = pop();
+                    arg_count -= 1;
+                    match arg {
+                        ScmObject::Number(number) => {
+                            product *= number;
+                        }
+                        _ => {
+                            set_return_value(ScmObject::Error(String::from(
+                                "fn *: arg not a number",
+                            )));
+                            return None;
+                        }
+                    }
+                }
+                set_return_value(ScmObject::Number(product));
+                return pop_re();
+            }
+            BuildInFunction::Cons => {
+                let cdr = pop();
+                let car = pop();
+
+                set_return_value(ScmObject::new_cons(car, cdr));
+                return pop_re();
+            }
+            BuildInFunction::Car => {
+                if let ScmObject::Cons(cons) = pop() {
+                    set_return_value(*cons.car);
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from("fn car: arg not a cons")));
+                    return None;
+                }
+            }
+            BuildInFunction::Cdr => {
+                if let ScmObject::Cons(cons) = pop() {
+                    set_return_value(*cons.cdr);
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from("fn car: arg not a cons")));
+                    return None;
+                }
+            }
+            BuildInFunction::Equal => {
+                let arg2 = pop();
+                let arg1 = pop();
+
+                if arg1.equal(&arg2) {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::Gt => {
+                let arg2 = pop();
+                let arg1 = pop();
+
+                match arg1 {
+                    ScmObject::Number(number) => match arg2 {
+                        ScmObject::Number(num) => {
+                            if number > num {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+                            return pop_re();
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                }
+                set_return_value(ScmObject::Error(String::from("fn gt: arg not a number")));
                 return None;
+            }
+            BuildInFunction::IsChars => {
+                if let ScmObject::Chars(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsCons => {
+                if let ScmObject::Cons(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsNumber => {
+                if let ScmObject::Number(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsFunction => {
+                if let ScmObject::Function(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsSyntax => {
+                if let ScmObject::Syntax(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsUserFunctions => {
+                if let ScmObject::UserFunction(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
+            BuildInFunction::EqualNumber => {
+                let arg2 = pop();
+                let arg1 = pop();
+
+                match arg1 {
+                    ScmObject::Number(number) => match arg2 {
+                        ScmObject::Number(num) => {
+                            if number == num {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+
+                            return pop_re();
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                }
+
+                set_return_value(ScmObject::Error(String::from("fn =: arg not a number")));
+                return None;
+            }
+            BuildInFunction::FnBody => {
+                let arg = pop();
+
+                if let ScmObject::UserFunction(func) = arg {
+                    set_return_value(*func.body_list);
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from(
+                        "fn fnBody: arg not a user function",
+                    )));
+                    return None;
+                }
+            }
+            BuildInFunction::FnArg => {
+                let arg = pop();
+
+                if let ScmObject::UserFunction(func) = arg {
+                    set_return_value(*func.arg_list);
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from(
+                        "fn fnArg: arg not a user function",
+                    )));
+                    return None;
+                }
+            }
+            BuildInFunction::List => {
+                let mut rest = ScmObject::Nil;
+                let mut arg;
+                while arg_count > 0 {
+                    arg = pop();
+                    arg_count -= 1;
+                    rest = ScmObject::new_cons(arg, rest);
+                }
+                set_return_value(rest);
+                return pop_re();
+            }
+            BuildInFunction::Load => {
+                let file_name = pop();
+
+
+                //TODO
+
+            }
+            BuildInFunction::Open => {
+                //TODO
+            }
+            BuildInFunction::Close => {
+                //TODO
+            }
+            BuildInFunction::Read => {
+                //TODO
+            }
+            BuildInFunction::ReadChar => {
+                //TODO
+            }
+            BuildInFunction::ReadLine => {
+                //TODO
             }
         }
     }

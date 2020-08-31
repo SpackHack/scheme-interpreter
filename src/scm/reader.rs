@@ -99,7 +99,6 @@ fn read_number(c: char, stream: &mut ScmStream) -> ScmObject {
     };
 }
 
-// Endlosschleife wenn string nicht beendet
 fn read_chars(stream: &mut ScmStream) -> ScmObject {
     let mut chars = String::new();
     return loop {

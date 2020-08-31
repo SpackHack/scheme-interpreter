@@ -19,7 +19,7 @@
       "request": "launch",
       "name": "Debug with Init",
       "program": "${workspaceRoot}/target/debug/scheme",
-      "args": ["-i"],
+      "args": ["-i", "-t"],
       "cwd": "${workspaceRoot}",
       "sourceLanguages": ["rust"],
       "preLaunchTask": "cargo build"
