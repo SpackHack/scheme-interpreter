@@ -197,6 +197,10 @@ fn read_hash(stream: &mut ScmStream) -> ScmObject {
                 // end
                 return ScmObject::Null;
             }
+            'V' | 'v' => {
+                // end
+                return ScmObject::Void;
+            }
             _ => return ScmObject::Error(String::from("Error in hash")),
         },
         None => {

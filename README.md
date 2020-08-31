@@ -8,7 +8,7 @@ Scheme Interpreter in Rust
 - -i run init.scm
 - -t show eval time
 
-## Datatypes
+## ScmObject
 
 | type   | input             |
 | ------ | ----------------- |
@@ -29,34 +29,46 @@ Scheme Interpreter in Rust
 
 ## Buildinfunctions
 
-| name         | return |     |
-| ------------ | ------ | --- |
-| \+           | number |     |
-| \-           | number |     |
-| \*           | number |     |
-| display      | Void   |     |
-| print        | Void   |     |
-| print-env    | Void   |     |
-| cons         | cons   |     |
-| car          |        |     |
-| cdr          |        |     |
-| eq           | bool   |     |
-| \>           | bool   |     |
-| is-string    | bool   |     |
-| is-cons      | bool   |     |
-| is-number    | bool   |     |
-| is-buildinfn |        |     |
-| is-syntax    | bool   |     |
-| is-fn        | bool   |     |
-| =            | bool   |     |
-| fn-body      | list   |     |
-| fn-arg       | list   |     |
-| list         | list   |     |
-| load         |        |     |
-| open         |        |     |
-| close        |        |     |
-| read         |        |     |
-| read-char    |        |     |
-| read-line    |        |     |
+| name         | return    |            |
+| ------------ | --------- | ---------- |
+| \+           | number    | add number |
+| \-           | number    |            |
+| \*           | number    |            |
+| display      | Void      |            |
+| print        | Void      |            |
+| print-env    | Void      |            |
+| cons         | cons      |            |
+| car          | ScmObject |            |
+| cdr          | ScmObject |            |
+| eq           | bool      |            |
+| \>           | bool      |            |
+| is-string    | bool      |            |
+| is-cons      | bool      |            |
+| is-number    | bool      |            |
+| is-buildinfn |           |            |
+| is-syntax    | bool      |            |
+| is-fn        | bool      |            |
+| =            | bool      |            |
+| fn-body      | list      |            |
+| fn-arg       | list      |            |
+| list         | list      |            |
+| load         |           |            |
+| open         |           |            |
+| close        |           |            |
+| read         |           |            |
+| read-char    |           |            |
+| read-line    |           |            |
 
 ## Function in Init.scm
+
+| name     | return |     |
+| -------- | ------ | --- |
+| not      | bool   |     |
+| <        | bool   |     |
+| >=       | bool   |     |
+| <=       | bool   |     |
+| for-loop | void   |     |
+
+## TODO
+
+- Function call itself

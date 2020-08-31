@@ -4,11 +4,10 @@ use std::io::Write;
 
 pub fn print_result(input: ScmObject) {
     match input {
-        ScmObject::None => {}
         ScmObject::Void => {}
         _ => {
-            print!("> ");
             print(input, true);
+            println!();
             io::stdout().flush().unwrap();
         }
     }
@@ -16,7 +15,6 @@ pub fn print_result(input: ScmObject) {
 
 pub fn display_or_print(scm: ScmObject, do_print: bool) {
     match scm {
-        ScmObject::None => {}
         ScmObject::Void => {}
         _ => {
             print(scm, do_print);

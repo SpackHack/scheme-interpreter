@@ -29,13 +29,13 @@ impl ScmEnvironment {
             if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
-                    self.update_user_function_env();
+                    &self.update_user_function_env();
                     return;
                 }
             }
         }
         &self.bindings.push(ScmObject::new_cons(key, value.clone()));
-        self.update_user_function_env();
+        &self.update_user_function_env();
     }
 
     pub fn set(&mut self, key: ScmObject, value: ScmObject) {
@@ -43,7 +43,7 @@ impl ScmEnvironment {
             if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
-                    self.update_user_function_env();
+                    &self.update_user_function_env();
                     break;
                 }
             }
@@ -66,7 +66,7 @@ impl ScmEnvironment {
         }
         println!("Symbole not found");
         self.print();
-        ScmObject::None
+        ScmObject::Null
     }
 
     pub fn print(&mut self) {

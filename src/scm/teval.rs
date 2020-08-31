@@ -15,7 +15,7 @@ fn pop() -> ScmObject {
     unsafe {
         match STACK.pop() {
             Some(s) => s,
-            None => ScmObject::None,
+            None => ScmObject::Null,
         }
     }
 }
@@ -563,6 +563,7 @@ fn t_print(is_print: bool, stack_index_of_first_arg: i64) {
     while let Some(s) = get_stack_element(stack_index_of_first_arg) {
         display_or_print(s, is_print);
     }
+    println!();
 }
 
 fn build_in_syntax() -> Option<ReturnFunction> {

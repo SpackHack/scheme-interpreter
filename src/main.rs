@@ -2,10 +2,12 @@ mod scm;
 
 use scm::environment::ScmEnvironment;
 use scm::scm_object::{BuildInFunction, BuildInSyntax, NumArgs, ScmObject};
-use scm::stream::ScmStream;
+use scm::stream::{ScmStream, Stream};
 
 use std::env;
 use std::fs::File;
+use std::io;
+use std::io::Write;
 use std::time::SystemTime;
 
 fn main() {
@@ -56,21 +58,24 @@ fn main() {
 
 fn run(mut stream: ScmStream, mut env: ScmEnvironment, show_time: bool) -> ScmEnvironment {
     loop {
+        if let Stream::STDIN(_) = stream.stream {
+            print!("> ");
+            io::stdout().flush().unwrap();
+        }
+        
         let input: ScmObject = scm::reader::read(&mut stream);
+
         if let ScmObject::EndOfFile = input {
             break;
         }
+        
         let start = SystemTime::now();
         let re = scm::teval::eval(input, env);
         let stop = SystemTime::now();
         env = re.1;
-        match re.0 {
-            ScmObject::Void => {}
-            _ => {
-                scm::printer::print_result(re.0);
-                println!();
-            }
-        }
+
+        scm::printer::print_result(re.0);
+
         if show_time {
             println!("exec time: {:?}", stop.duration_since(start));
         }

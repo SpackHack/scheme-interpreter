@@ -12,7 +12,6 @@ pub enum ScmObject {
     Syntax(ScmBuildInSyntax),
     UserFunction(ScmUserFunction),
     EndOfFile,
-    None,
     Null,
     Void,
     True,
@@ -211,12 +210,6 @@ impl ScmObject {
             }
             ScmObject::EndOfFile => {
                 if let ScmObject::EndOfFile = scm {
-                    return true;
-                }
-                return false;
-            }
-            ScmObject::None => {
-                if let ScmObject::None = scm {
                     return true;
                 }
                 return false;
