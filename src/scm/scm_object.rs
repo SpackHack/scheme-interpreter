@@ -1,4 +1,5 @@
 use super::environment::ScmEnvironment;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub enum ScmObject {
@@ -16,6 +17,7 @@ pub enum ScmObject {
     Void,
     True,
     False,
+    Env(Rc<ScmEnvironment>),
 }
 
 #[derive(Clone)]
@@ -88,7 +90,7 @@ pub struct ScmUserFunction {
     pub name: Option<String>,
     pub arg_list: Box<ScmObject>,
     pub body_list: Box<ScmObject>,
-    pub home_environment: Box<ScmEnvironment>,
+    pub home_environment: Rc<ScmEnvironment>,
 }
 
 impl ScmObject {
@@ -126,14 +128,21 @@ impl ScmObject {
         name: Option<String>,
         arg_list: ScmObject,
         body_list: ScmObject,
-        home_environment: ScmEnvironment,
+        home_environment: Rc<ScmEnvironment>,
     ) -> Self {
         ScmObject::UserFunction(ScmUserFunction {
             name: name,
             arg_list: Box::from(arg_list),
             body_list: Box::from(body_list),
-            home_environment: Box::from(home_environment),
+            home_environment: Rc::clone(&home_environment),
         })
+    }
+
+    pub fn new_env() -> Self {
+        ScmObject::Env(Rc::new(ScmEnvironment {
+            bindings: Vec::new(),
+            parent_env: None,
+        }))
     }
 
     pub fn get_number(&self) -> i64 {
@@ -141,6 +150,13 @@ impl ScmObject {
             return *n;
         }
         panic!("get Number of not a number");
+    }
+
+    pub fn get_env(&self) -> Rc<ScmEnvironment> {
+        if let ScmObject::Env(env) = self {
+            return env.clone();
+        }
+        panic!("get Env of not env");
     }
 
     pub fn equal(&self, scm: &ScmObject) -> bool {
@@ -237,6 +253,10 @@ impl ScmObject {
                     return true;
                 }
                 false
+            }
+            ScmObject::Env(rc_env) => {
+                // TODO
+                return false;
             }
         }
     }

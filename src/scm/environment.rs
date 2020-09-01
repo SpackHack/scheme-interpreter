@@ -3,25 +3,19 @@ use super::scm_object::*;
 
 use std::io;
 use std::io::Write;
+use std::rc::Rc;
 
 // TODO: add hashing
 
 #[derive(Clone)]
 pub struct ScmEnvironment {
-    pub parent_env: Option<Box<ScmEnvironment>>,
+    pub parent_env: Option<Rc<ScmEnvironment>>,
     pub bindings: Vec<ScmObject>,
 }
 
 impl ScmEnvironment {
-    pub fn new() -> Self {
-        ScmEnvironment {
-            bindings: Vec::new(),
-            parent_env: None,
-        }
-    }
-
-    pub fn set_parent_env(&mut self, env: &ScmEnvironment) {
-        self.parent_env = Some(Box::from(env.clone()));
+    pub fn set_parent_env(&mut self, env: Rc<ScmEnvironment>) {
+        self.parent_env = Some(Rc::clone(&env));
     }
 
     pub fn define(&mut self, key: ScmObject, value: &ScmObject) {
@@ -29,27 +23,27 @@ impl ScmEnvironment {
             if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
-                    &self.update_user_function_env();
                     return;
                 }
             }
         }
         &self.bindings.push(ScmObject::new_cons(key, value.clone()));
-        &self.update_user_function_env();
     }
 
-    pub fn set(&mut self, key: ScmObject, value: ScmObject) {
+    pub fn set(&mut self, key: ScmObject, value: &ScmObject) {
         for elem in self.bindings.iter_mut() {
             if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
-                    &self.update_user_function_env();
                     break;
                 }
             }
         }
-        if let Some(e) = self.parent_env.iter_mut().next() {
-            (*e).set(key, value)
+
+        if let Some(mut e) = self.parent_env.iter_mut().next() {
+            unsafe {
+                Rc::get_mut_unchecked(&mut e).set(key, value);
+            }
         }
     }
 
@@ -61,8 +55,10 @@ impl ScmEnvironment {
                 }
             }
         }
-        if let Some(e) = self.parent_env.iter_mut().next() {
-            return (*e).get(key);
+        if let Some(mut e) = self.parent_env.iter_mut().next() {
+            unsafe {
+                return Rc::get_mut_unchecked(&mut e).get(key);
+            }
         }
         println!("Symbole not found");
         self.print();
@@ -80,23 +76,12 @@ impl ScmEnvironment {
                 println!();
             }
         }
-        if let Some(mut s) = self.parent_env.clone() {
+        if let Some(mut s) = self.parent_env.iter_mut().next() {
             println!("Parent Env");
-            s.print();
-            return;
-        }
-        io::stdout().flush().unwrap();
-    }
-
-    fn update_user_function_env(&mut self) {
-        let e = self.clone();
-        for elem in self.bindings.iter_mut() {
-            if let ScmObject::Cons(cons) = elem {
-                if let ScmObject::UserFunction(func) = *cons.cdr.clone() {
-                    *cons.cdr =
-                        ScmObject::new_user_fn(func.name, *func.arg_list, *func.body_list, e.clone());
-                }
+            unsafe {
+                Rc::get_mut_unchecked(&mut s).print();
             }
         }
+        io::stdout().flush().unwrap();
     }
 }
