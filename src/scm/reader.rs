@@ -1,5 +1,5 @@
 use super::memory::new_symbole;
-use super::scm_object::ScmObject;
+use super::scm_object::{NumberType, ScmObject};
 use super::stream::*;
 use std::io::Read;
 use std::rc::Rc;
@@ -39,9 +39,9 @@ fn unread_char(stream: &mut ScmStream, c: char) {
     stream.read_char.push(c);
 }
 
-fn unread_vector(stream: &mut ScmStream, vec: Vec<char>) {
-    for elem in vec {
-        unread_char(stream, elem);
+fn unread_string(stream: &mut ScmStream, vec: String) {
+    for (index, c) in vec.char_indices() {
+        unread_char(stream, c);
     }
 }
 
@@ -65,8 +65,17 @@ fn read(mut stream: &mut ScmStream) -> ScmObject {
         }
     }
 
-    if is_type_number(c, stream) {
-        return read_number(c, stream);
+    if is_number(c) || c == '-' {
+        if let Some(number_type) = is_type_number(c, stream) {
+            match number_type {
+                NumberType::Integer(chars) => {
+                    return read_integer(chars);
+                }
+                NumberType::Float(chars) => {
+                    return read_float(chars);
+                }
+            };
+        }
     } else if c == '"' {
         return read_chars(stream);
     } else if c == '(' {
@@ -75,7 +84,7 @@ fn read(mut stream: &mut ScmStream) -> ScmObject {
         let a = read(stream);
         let cons = ScmObject::new_cons(a, ScmObject::Nil);
         return ScmObject::new_cons(ScmObject::Symbol(String::from("quote")), cons);
-    } else if is_end_of_file(c) {
+    } else if is_end_of_file(&c) {
         return ScmObject::EndOfFile;
     }
 
@@ -83,35 +92,18 @@ fn read(mut stream: &mut ScmStream) -> ScmObject {
     return read_symbol(stream);
 }
 
-// if number to big rust panic
-fn read_number(c: char, stream: &mut ScmStream) -> ScmObject {
-    let mut number: i64 = 0;
-    let mut is_negativ: bool = true;
-
-    if c != '-' {
-        is_negativ = false;
-        number = c as i64 - '0' as i64;
+fn read_integer(chars: String) -> ScmObject {
+    match chars.parse::<i64>() {
+        Ok(n) => ScmObject::Integer(n),
+        Err(_e) => ScmObject::Error(String::from("Not a Integer Number")),
     }
+}
 
-    return loop {
-        match get_char(stream) {
-            Some(c) => {
-                if is_number(c) {
-                    number = number * 10;
-                    number = number + c as i64 - '0' as i64;
-                } else {
-                    if is_negativ {
-                        number = number * -1;
-                    }
-                    unread_char(stream, c);
-                    break ScmObject::Number(number);
-                }
-            }
-            None => {
-                break ScmObject::Error(String::from("Error in read Number"));
-            }
-        }
-    };
+fn read_float(chars: String) -> ScmObject {
+    match chars.parse::<f64>() {
+        Ok(n) => ScmObject::Float(n),
+        Err(_e) => ScmObject::Error(String::from("Not a Float Number")),
+    }
 }
 
 fn read_chars(stream: &mut ScmStream) -> ScmObject {
@@ -133,7 +125,6 @@ fn read_chars(stream: &mut ScmStream) -> ScmObject {
     };
 }
 
-// Endlosschleife wenn list nicht beendet
 fn read_list(stream: &mut ScmStream) -> ScmObject {
     let c: char = skip_whitespace(stream);
 
@@ -156,7 +147,6 @@ fn read_symbol(stream: &mut ScmStream) -> ScmObject {
     match get_char(stream) {
         Some(c) => match c {
             '#' => {
-                // read tags
                 return read_hash(stream);
             }
             _ => {
@@ -171,22 +161,18 @@ fn read_symbol(stream: &mut ScmStream) -> ScmObject {
                 ' ' => {
                     // end
                     return unsafe { new_symbole(symbole) };
-                    //return ScmObject::new_symbol(symbole);
                 }
                 ';' => {
                     unread_char(stream, c);
                     return unsafe { new_symbole(symbole) };
-                    //return ScmObject::new_symbol(symbole);
                 }
                 '\n' => {
                     unread_char(stream, c);
                     return unsafe { new_symbole(symbole) };
-                    //return ScmObject::new_symbol(symbole);
                 }
                 ')' => {
                     unread_char(stream, c);
                     return unsafe { new_symbole(symbole) };
-                    //return ScmObject::new_symbol(symbole);
                 }
                 _ => {
                     symbole.push(c);
@@ -228,7 +214,7 @@ fn skip_whitespace(stream: &mut ScmStream) -> char {
     loop {
         match get_char(stream) {
             Some(c) => {
-                if !is_whitespace(c) {
+                if !is_whitespace(&c) {
                     break c;
                 }
             }
@@ -250,52 +236,62 @@ fn skip_line(stream: &mut ScmStream) -> char {
     };
 }
 
-fn is_whitespace(character: char) -> bool {
-    if character == ' ' || character == '\n' || character == '\t' || character == '\r' {
+fn is_whitespace(character: &char) -> bool {
+    if *character == ' ' || *character == '\n' || *character == '\t' || *character == '\r' {
         return true;
     }
     false
 }
 
-fn is_end_of_file(character: char) -> bool {
-    if character as i64 == 0 {
+fn is_end_of_file(character: &char) -> bool {
+    if *character as i64 == 0 {
         return true;
     }
     false
 }
 
-fn is_type_number(mut character: char, scm_stream: &mut ScmStream) -> bool {
-    let mut chars: Vec<char> = vec![];
-    if character == '-' {
-        character = get_char(scm_stream).unwrap();
+fn is_type_number(mut character: char, scm_stream: &mut ScmStream) -> Option<NumberType> {
+    let mut chars: String = String::from("");
+    let mut isInteger: bool = true;
+
+    while !is_end_of_type(&character) {
         chars.push(character);
-        if is_whitespace(character) || is_end_of_file(character) {
-            chars.reverse();
-            unread_vector(scm_stream, chars);
-            return false;
+        character = get_char(scm_stream).unwrap();
+    }
+
+    for (index, c) in chars.char_indices() {
+        match c {
+            '-' => {
+                if index != 0 {
+                    chars.push(character);
+                    unread_string(scm_stream, chars);
+                    return None;
+                }
+            }
+            '.' => {
+                if !isInteger || index == 0 {
+                    chars.push(character);
+                    unread_string(scm_stream, chars);
+                    return None;
+                }
+                isInteger = false;
+            }
+            '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {}
+            _ => {
+                chars.push(character);
+                unread_string(scm_stream, chars);
+                return None;
+            }
         }
+    }
+
+    unread_char(scm_stream, character);
+
+    if isInteger {
+        return Some(NumberType::Integer(chars));
     } else {
-        if !is_number(character) {
-            return false;
-        }
+        return Some(NumberType::Float(chars));
     }
-
-    character = get_char(scm_stream).unwrap();
-    let mut re: bool = true;
-
-    while !is_end_of_type(character) {
-        if !is_number(character) {
-            re = false;
-            break;
-        }
-
-        chars.push(character);
-        character = get_char(scm_stream).unwrap();
-    }
-    chars.push(character);
-    chars.reverse();
-    unread_vector(scm_stream, chars);
-    return re;
 }
 
 fn is_number(character: char) -> bool {
@@ -305,8 +301,8 @@ fn is_number(character: char) -> bool {
     false
 }
 
-fn is_end_of_type(c: char) -> bool {
-    if is_whitespace(c) || is_end_of_file(c) || c == ';' || c == ')' {
+fn is_end_of_type(c: &char) -> bool {
+    if is_whitespace(c) || is_end_of_file(c) || *c == ';' || *c == ')' {
         return true;
     }
     false

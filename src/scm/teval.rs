@@ -1,7 +1,7 @@
-use std::fs::File;
 use super::printer::display_or_print;
 use super::scm_object::*;
 use super::stack::*;
+use std::fs::File;
 
 use std::rc::Rc;
 
@@ -139,7 +139,7 @@ fn build_in_function() -> Option<ReturnFunction> {
     let func: ScmObject = pop();
     let env = pop();
 
-    let stack_index_of_first_arg = ScmObject::Number(get_stack_size() as i64);
+    let stack_index_of_first_arg = ScmObject::Integer(get_stack_size() as i64);
 
     if let ScmObject::Cons(cons) = args {
         push(stack_index_of_first_arg.clone());
@@ -192,7 +192,7 @@ fn build_in_function2() -> Option<ReturnFunction> {
     let func: ScmObject = pop();
     let stack_index_of_first_arg = pop();
 
-    let index_first_arg = stack_index_of_first_arg.get_number();
+    let index_first_arg = stack_index_of_first_arg.get_Integer();
 
     let mut arg_count = get_stack_size() as i64 - index_first_arg;
 
@@ -208,14 +208,17 @@ fn build_in_function2() -> Option<ReturnFunction> {
 
         match func.tag {
             BuildInFunction::Plus => {
-                let mut sum: i64 = 0;
+                let mut sum: f64 = 0.0;
                 let mut arg;
                 while arg_count > 0 {
                     arg = pop();
                     arg_count -= 1;
                     match arg {
                         // TODO: overflow
-                        ScmObject::Number(number) => {
+                        ScmObject::Integer(number) => {
+                            sum += number as f64;
+                        }
+                        ScmObject::Float(number) => {
                             sum += number;
                         }
                         _ => {
@@ -227,18 +230,25 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     }
                 }
 
-                set_return_value(ScmObject::Number(sum));
+                if sum.rem_euclid(1.0) == 0.0 {
+                    set_return_value(ScmObject::Integer(sum as i64));
+                } else {
+                    set_return_value(ScmObject::Float(sum));
+                }
                 return pop_re();
             }
             BuildInFunction::Minus => {
-                let mut sum: i64 = 0;
+                let mut sum: f64 = 0.0;
                 let mut arg;
                 while arg_count > 1 {
                     arg = pop();
                     arg_count -= 1;
                     match arg {
                         // TODO: overflow
-                        ScmObject::Number(number) => {
+                        ScmObject::Integer(number) => {
+                            sum -= number as f64;
+                        }
+                        ScmObject::Float(number) => {
                             sum -= number;
                         }
                         _ => {
@@ -250,16 +260,24 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     }
                 }
 
-                arg = pop();
-
-                if let ScmObject::Number(number) = arg {
-                    sum += number;
-                } else {
-                    set_return_value(ScmObject::Error(String::from("fn -: arg not a number")));
-                    return None;
+                match pop() {
+                    ScmObject::Integer(number) => {
+                        sum += number as f64;
+                    }
+                    ScmObject::Float(number) => {
+                        sum += number;
+                    }
+                    _ => {
+                        set_return_value(ScmObject::Error(String::from("fn -: arg not a number")));
+                        return None;
+                    }
                 }
 
-                set_return_value(ScmObject::Number(sum));
+                if sum.rem_euclid(1.0) == 0.0 {
+                    set_return_value(ScmObject::Integer(sum as i64));
+                } else {
+                    set_return_value(ScmObject::Float(sum));
+                }
                 return pop_re();
             }
             BuildInFunction::Display => {
@@ -278,14 +296,17 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 return pop_re();
             }
             BuildInFunction::Times => {
-                let mut product = 1;
+                let mut product = 1.0;
                 let mut arg;
                 while arg_count > 0 {
                     // TODO: overflow
                     arg = pop();
                     arg_count -= 1;
                     match arg {
-                        ScmObject::Number(number) => {
+                        ScmObject::Integer(number) => {
+                            product *= number as f64;
+                        }
+                        ScmObject::Float(number) => {
                             product *= number;
                         }
                         _ => {
@@ -296,7 +317,11 @@ fn build_in_function2() -> Option<ReturnFunction> {
                         }
                     }
                 }
-                set_return_value(ScmObject::Number(product));
+                if product.rem_euclid(1.0) == 0.0 {
+                    set_return_value(ScmObject::Integer(product as i64));
+                } else {
+                    set_return_value(ScmObject::Float(product));
+                }
                 return pop_re();
             }
             BuildInFunction::Cons => {
@@ -340,9 +365,36 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 let arg1 = pop();
 
                 match arg1 {
-                    ScmObject::Number(number) => match arg2 {
-                        ScmObject::Number(num) => {
+                    ScmObject::Integer(number) => match arg2 {
+                        ScmObject::Integer(num) => {
                             if number > num {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+                            return pop_re();
+                        }
+                        ScmObject::Float(num) => {
+                            if number as f64 > num {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+                            return pop_re();
+                        }
+                        _ => {}
+                    },
+                    ScmObject::Float(number) => match arg2 {
+                        ScmObject::Integer(num) => {
+                            if number > num as f64 {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+                            return pop_re();
+                        }
+                        ScmObject::Float(num) => {
+                            if number as f64 > num {
                                 set_return_value(ScmObject::True);
                             } else {
                                 set_return_value(ScmObject::False);
@@ -373,10 +425,24 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 return pop_re();
             }
             BuildInFunction::IsNumber => {
-                if let ScmObject::Number(_) = pop() {
-                    set_return_value(ScmObject::True);
-                } else {
-                    set_return_value(ScmObject::False);
+                match pop() {
+                    ScmObject::Integer(_) => set_return_value(ScmObject::True),
+                    ScmObject::Float(_) => set_return_value(ScmObject::True),
+                    _ => set_return_value(ScmObject::False),
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsInteger => {
+                match pop() {
+                    ScmObject::Float(_) => set_return_value(ScmObject::True),
+                    _ => set_return_value(ScmObject::False),
+                }
+                return pop_re();
+            }
+            BuildInFunction::IsFloat => {
+                match pop() {
+                    ScmObject::Float(_) => set_return_value(ScmObject::True),
+                    _ => set_return_value(ScmObject::False),
                 }
                 return pop_re();
             }
@@ -417,14 +483,40 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 let arg1 = pop();
 
                 match arg1 {
-                    ScmObject::Number(number) => match arg2 {
-                        ScmObject::Number(num) => {
+                    ScmObject::Integer(number) => match arg2 {
+                        ScmObject::Integer(num) => {
                             if number == num {
                                 set_return_value(ScmObject::True);
                             } else {
                                 set_return_value(ScmObject::False);
                             }
-
+                            return pop_re();
+                        }
+                        ScmObject::Float(num) => {
+                            if number as f64 == num {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+                            return pop_re();
+                        }
+                        _ => {}
+                    },
+                    ScmObject::Float(number) => match arg2 {
+                        ScmObject::Integer(num) => {
+                            if number == num as f64 {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
+                            return pop_re();
+                        }
+                        ScmObject::Float(num) => {
+                            if number == num {
+                                set_return_value(ScmObject::True);
+                            } else {
+                                set_return_value(ScmObject::False);
+                            }
                             return pop_re();
                         }
                         _ => {}
@@ -482,9 +574,7 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 if let ScmObject::Chars(c) = scm_file_name {
                     file_name = c;
                 } else {
-                    set_return_value(ScmObject::Error(String::from(
-                        "fn load: arg not a String",
-                    )));
+                    set_return_value(ScmObject::Error(String::from("fn load: arg not a String")));
                     return None;
                 }
 
@@ -562,7 +652,6 @@ fn t_load() -> Option<ReturnFunction> {
         push_re(ReturnFunction::new(t_load));
         return Some(ReturnFunction::new(t_eval));
     }
-
 }
 
 fn build_in_syntax() -> Option<ReturnFunction> {
@@ -872,7 +961,7 @@ fn t_user_function() -> Option<ReturnFunction> {
     let mut env = pop();
 
     if let ScmObject::Cons(cons) = args {
-        let start_index = ScmObject::Number(get_stack_size() as i64);
+        let start_index = ScmObject::Integer(get_stack_size() as i64);
 
         push(start_index);
         push(function);
@@ -944,7 +1033,7 @@ fn t_user_function1() -> Option<ReturnFunction> {
             Rc::get_mut_unchecked(&mut env.get_env()).set_parent_env(func.home_environment);
         }
 
-        let stack_index_of_arg = start_index.get_number();
+        let stack_index_of_arg = start_index.get_Integer();
         let mut arg_names = *func.arg_list;
 
         while let ScmObject::Cons(cons) = arg_names {

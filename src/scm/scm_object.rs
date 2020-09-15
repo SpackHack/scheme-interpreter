@@ -1,13 +1,14 @@
 use super::environment::ScmEnvironment;
 use super::stream::{ScmStream, StreamType};
-use std::rc::Rc;
 use std::fs::File;
-use std::io::{stdin};
+use std::io::stdin;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub enum ScmObject {
     Error(String),
-    Number(i64),
+    Integer(i64),
+    Float(f64),
     Chars(String),
     Cons(Cons),
     Nil, // end of list
@@ -22,6 +23,11 @@ pub enum ScmObject {
     False,
     Env(Rc<ScmEnvironment>),
     Stream(ScmStream),
+}
+
+pub enum NumberType {
+    Integer(String),
+    Float(String),
 }
 
 #[derive(Clone)]
@@ -57,6 +63,8 @@ pub enum BuildInFunction {
     IsChars,
     IsCons,
     IsNumber,
+    IsInteger,
+    IsFloat,
     IsFunction,
     IsSyntax,
     IsUserFunctions,
@@ -164,11 +172,18 @@ impl ScmObject {
         })
     }
 
-    pub fn get_number(&self) -> i64 {
-        if let ScmObject::Number(n) = self {
+    pub fn get_Integer(&self) -> i64 {
+        if let ScmObject::Integer(n) = self {
             return *n;
         }
-        panic!("get Number of not a number");
+        panic!("get Integer of not a Integer");
+    }
+
+    pub fn get_Float(&self) -> f64 {
+        if let ScmObject::Float(n) = self {
+            return *n;
+        }
+        panic!("get Float of not a Float");
     }
 
     pub fn get_env(&self) -> Rc<ScmEnvironment> {
@@ -183,8 +198,16 @@ impl ScmObject {
             ScmObject::Error(_) => {
                 return false;
             }
-            ScmObject::Number(number) => {
-                if let ScmObject::Number(num) = scm {
+            ScmObject::Integer(number) => {
+                if let ScmObject::Integer(num) = scm {
+                    if number == num {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            ScmObject::Float(number) => {
+                if let ScmObject::Float(num) = scm {
                     if number == num {
                         return true;
                     }

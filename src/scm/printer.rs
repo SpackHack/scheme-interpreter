@@ -28,7 +28,10 @@ fn print(input: ScmObject, do_print: bool) {
         ScmObject::Error(error) => {
             print!("Error => {}", error);
         }
-        ScmObject::Number(numbers) => {
+        ScmObject::Integer(numbers) => {
+            print!("{}", numbers);
+        }
+        ScmObject::Float(numbers) => {
             print!("{}", numbers);
         }
         ScmObject::Chars(chars) => {

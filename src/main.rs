@@ -13,7 +13,6 @@ use std::rc::Rc;
 use std::time::SystemTime;
 
 fn main() {
-    scm::selftest::selftest();
     let mut init: bool = false;
     let mut show_time: bool = false;
     let args: Vec<String> = env::args().collect();
