@@ -42,12 +42,13 @@ Scheme Interpreter in Rust
 | cdr          | ScmObject |            |
 | eq           | bool      |            |
 | \>           | bool      |            |
-| is-string    | bool      |            |
-| is-cons      | bool      |            |
-| is-number    | bool      |            |
+| string?      | bool      |            |
+| cons?        | bool      |            |
+| number?      | bool      |            |
 | is-buildinfn |           |            |
 | is-syntax    | bool      |            |
 | is-fn        | bool      |            |
+| symbol?      | bool      |            |
 | =            | bool      |            |
 | fn-body      | list      |            |
 | fn-arg       | list      |            |
@@ -68,4 +69,3 @@ Scheme Interpreter in Rust
 | >=       | bool   |     |
 | <=       | bool   |     |
 | for-loop | void   |     |
-

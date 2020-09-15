@@ -11,41 +11,53 @@
 
 (display "**************************** start of selftest.scm **************\n")
 
-(define (nameOrUnnamedIfNil arg)
-    (if (eq? arg '()) "unnamed" arg))
-
-(define (ASSERT_L lineNr boolean nameOfTest)
-    (if boolean
-	(begin
-	    #void ; (display (nameOrUnnamedIfNil nameOfTest) ": ok\n")
-	)
-    ; else
-	(begin
-	    (display (nameOrUnnamedIfNil nameOfTest) ": **** FAILED [" lineNr "]\n")
-	    (abort)
-	)
+(define nameOrUnnamedIfNil 
+    (lambda 
+        (arg)
+        (if 
+            (eq? arg #n)
+            "unnamed"
+            arg
+        )
     )
 )
 
-(define (ASSERT boolean nameOfTest)
-    (ASSERT_L "?" boolean nameOfTest))
+(define ASSERT_L  
+    (lambda (lineNr boolean nameOfTest)
+        (if 
+            boolean
+	        (begin
+	            (display (nameOrUnnamedIfNil nameOfTest) ": ok\n")
+	        )
+	        (begin
+	            (display (nameOrUnnamedIfNil nameOfTest) ": **** FAILED [" lineNr "]\n")
+	            (abort)
+	        )
+        )
+    )
+)
 
-(define (ASSERT_RSLT function expected)
+(define ASSERT (lambda (boolean nameOfTest)
+    (ASSERT_L "?" boolean nameOfTest)))
+
+(define ASSERT_RSLT (lambda ( function expected)
     (define result (function))
 
 
     (if (equal? result expected)
 	(begin
-	    ; (display (nameOrUnnamedIfNil (function-name function)))
-	    #void ; (display ": ok\n")
+	    (display (nameOrUnnamedIfNil (function-name function)))
+	    (display ": ok\n")
 	)
-    ;else
 	(begin
 	    (display (nameOrUnnamedIfNil (function-name function)))
 	    (display ": **** FAILED (expected:" expected " got:" result "\n")
 	)
     )
-)
+))
+
+
+(display "**************************** start of tests **************\n")
 
 ;; ----------------
 ;; predicates
@@ -93,80 +105,81 @@
 (ASSERT (eq? (number? "1") #f) "number?")
 (ASSERT (eq? (number? '()) #f) "number?")
 (ASSERT (eq? (number? 1234) #t) "number?")
-(ASSERT (eq? (number? 1234.5) #t) "number?")
+;(ASSERT (eq? (number? 1234.5) #t) "number?")
 (ASSERT (eq? (number? '(1 2 3)) #f) "number?")
 
 ;;
 ;; float?
 ;;
-(ASSERT (eq? (float? "") #f) "float?")
-(ASSERT (eq? (float? 'a) #f) "float?")
-(ASSERT (eq? (float? "1") #f) "float?")
-(ASSERT (eq? (float? '()) #f) "float?")
-(ASSERT (eq? (float? 1234) #f) "float?")
-(ASSERT (eq? (float? 1234.5) #t) "float?")
-(ASSERT (eq? (float? '(1 2 3)) #f) "float?")
+; (ASSERT (eq? (float? "") #f) "float?")
+; (ASSERT (eq? (float? 'a) #f) "float?")
+; (ASSERT (eq? (float? "1") #f) "float?")
+; (ASSERT (eq? (float? '()) #f) "float?")
+; (ASSERT (eq? (float? 1234) #f) "float?")
+; (ASSERT (eq? (float? 1234.5) #t) "float?")
+; (ASSERT (eq? (float? '(1 2 3)) #f) "float?")
 
 ;;
 ;; integer?
 ;;
-(ASSERT (eq? (integer? "") #f) "integer?")
-(ASSERT (eq? (integer? 'a) #f) "integer?")
-(ASSERT (eq? (integer? "1") #f) "integer?")
-(ASSERT (eq? (integer? '()) #f) "integer?")
-(ASSERT (eq? (integer? 1234) #t) "integer?")
-(ASSERT (eq? (integer? 1234.5) #f) "integer?")
-(ASSERT (eq? (integer? '(1 2 3)) #f) "integer?")
+; (ASSERT (eq? (integer? "") #f) "integer?")
+; (ASSERT (eq? (integer? 'a) #f) "integer?")
+; (ASSERT (eq? (integer? "1") #f) "integer?")
+; (ASSERT (eq? (integer? '()) #f) "integer?")
+; (ASSERT (eq? (integer? 1234) #t) "integer?")
+; (ASSERT (eq? (integer? 1234.5) #f) "integer?")
+; (ASSERT (eq? (integer? '(1 2 3)) #f) "integer?")
 
 ;;
 ;; function?
 ;;
-(ASSERT (eq? (function? "") #f) "function?")
-(ASSERT (eq? (function? '(1 2 3)) #f) "function?")
-(ASSERT (eq? (function? +) #t) "function?")
-(ASSERT (eq? (function? (lambda () #void)) #t) "function?")
+; (ASSERT (eq? (function? "") #f) "function?")
+; (ASSERT (eq? (function? '(1 2 3)) #f) "function?")
+; (ASSERT (eq? (function? +) #t) "function?")
+; (ASSERT (eq? (function? (lambda () #void)) #t) "function?")
 
 ;;
 ;; macro?
 ;;
-(ASSERT_L #__LINE__ (eq? (macro? "") #f) "macro?")
-(ASSERT_L #__LINE__ (eq? (macro? '(1 2 3)) #f) "macro?")
-(ASSERT_L #__LINE__ (eq? (macro? +) #f) "macro?")
-(ASSERT_L #__LINE__ (eq? (macro? (macro () #void)) #t) "macro?")
-(ASSERT_L #__LINE__ (eq? (macro? and) #t) "macro?")
+; (ASSERT_L #__LINE__ (eq? (macro? "") #f) "macro?")
+; (ASSERT_L #__LINE__ (eq? (macro? '(1 2 3)) #f) "macro?")
+; (ASSERT_L #__LINE__ (eq? (macro? +) #f) "macro?")
+; (ASSERT_L #__LINE__ (eq? (macro? (macro () #void)) #t) "macro?")
+; (ASSERT_L #__LINE__ (eq? (macro? and) #t) "macro?")
 
 ;;
 ;; array?
 ;;
-(ASSERT_L #__LINE__ (eq? (array? (make-array 0)) #t) "array?")
-(ASSERT_L #__LINE__ (eq? (array? (make-array 10)) #t) "array?")
-(ASSERT_L #__LINE__ (eq? (array? '()) #f) "array?")
-(ASSERT_L #__LINE__ (eq? (array? 1234) #f) "array?")
-(ASSERT_L #__LINE__ (eq? (array? +) #f) "array?")
-(ASSERT_L #__LINE__ (eq? (array? and) #f) "array?")
+; (ASSERT_L #__LINE__ (eq? (array? (make-array 0)) #t) "array?")
+; (ASSERT_L #__LINE__ (eq? (array? (make-array 10)) #t) "array?")
+; (ASSERT_L #__LINE__ (eq? (array? '()) #f) "array?")
+; (ASSERT_L #__LINE__ (eq? (array? 1234) #f) "array?")
+; (ASSERT_L #__LINE__ (eq? (array? +) #f) "array?")
+; (ASSERT_L #__LINE__ (eq? (array? and) #f) "array?")
 
 ;;
 ;; bytearray?
 ;;
-(ASSERT_L #__LINE__ (eq? (bytearray? (make-bytearray 0)) #t) "bytearray?")
-(ASSERT_L #__LINE__ (eq? (bytearray? (make-bytearray 10)) #t) "bytearray?")
-(ASSERT_L #__LINE__ (eq? (bytearray? '()) #f) "bytearray?")
-(ASSERT_L #__LINE__ (eq? (bytearray? 1234) #f) "bytearray?")
-(ASSERT_L #__LINE__ (eq? (bytearray? +) #f) "bytearray?")
-(ASSERT_L #__LINE__ (eq? (bytearray? and) #f) "bytearray?")
+; (ASSERT_L #__LINE__ (eq? (bytearray? (make-bytearray 0)) #t) "bytearray?")
+; (ASSERT_L #__LINE__ (eq? (bytearray? (make-bytearray 10)) #t) "bytearray?")
+; (ASSERT_L #__LINE__ (eq? (bytearray? '()) #f) "bytearray?")
+; (ASSERT_L #__LINE__ (eq? (bytearray? 1234) #f) "bytearray?")
+; (ASSERT_L #__LINE__ (eq? (bytearray? +) #f) "bytearray?")
+; (ASSERT_L #__LINE__ (eq? (bytearray? and) #f) "bytearray?")
 
 ;;
 ;; null?
 ;;
-(ASSERT (eq? (null? '()) #t) "null?")
-(ASSERT (eq? (null? '(1 2 3)) #f) "null?")
+;TODO
+; (ASSERT (eq? (null? '()) #t) "null?")
+; (ASSERT (eq? (null? '(1 2 3)) #f) "null?")
 
 ;;
 ;; char?
 ;;
-(ASSERT (eq? (char? '()) #f) "char?")
-(ASSERT (eq? (char? '(1 2 3)) #f) "char?")
-(ASSERT (eq? (char? #\h) #t) "char?")
+; (ASSERT (eq? (char? '()) #f) "char?")
+; (ASSERT (eq? (char? '(1 2 3)) #f) "char?")
+; (ASSERT (eq? (char? #\h) #t) "char?")
 
 ;; ----------------
 ;; relOps

@@ -60,6 +60,7 @@ pub enum BuildInFunction {
     IsFunction,
     IsSyntax,
     IsUserFunctions,
+    IsSymbole,
     EqualNumber,
     FnBody,
     FnArg,

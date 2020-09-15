@@ -192,7 +192,7 @@ fn init_build_in(scm_object: &mut ScmObject) {
             &ScmObject::new_fn(BuildInFunction::Cdr, String::from("cdr"), 1),
         );
         env.define(
-            ScmObject::Symbol(String::from("eq")),
+            ScmObject::Symbol(String::from("eq?")),
             &ScmObject::new_fn(BuildInFunction::Equal, String::from("equal"), 2),
         );
         env.define(
@@ -200,15 +200,15 @@ fn init_build_in(scm_object: &mut ScmObject) {
             &ScmObject::new_fn(BuildInFunction::Gt, String::from("Gt"), 2),
         );
         env.define(
-            ScmObject::Symbol(String::from("is-string")),
+            ScmObject::Symbol(String::from("string?")),
             &ScmObject::new_fn(BuildInFunction::IsChars, String::from("is-string"), 1),
         );
         env.define(
-            ScmObject::Symbol(String::from("is-cons")),
+            ScmObject::Symbol(String::from("cons?")),
             &ScmObject::new_fn(BuildInFunction::IsCons, String::from("is-cons"), 1),
         );
         env.define(
-            ScmObject::Symbol(String::from("is-number")),
+            ScmObject::Symbol(String::from("number?")),
             &ScmObject::new_fn(BuildInFunction::IsNumber, String::from("is-number"), 1),
         );
         env.define(
@@ -226,6 +226,10 @@ fn init_build_in(scm_object: &mut ScmObject) {
                 String::from("is-user_function"),
                 1,
             ),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("symbol?")),
+            &ScmObject::new_fn(BuildInFunction::IsSymbole, String::from("is-symbol"), 1),
         );
         env.define(
             ScmObject::Symbol(String::from("=")),

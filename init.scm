@@ -16,4 +16,8 @@
 
 
 (define reload (lambda () (load "init.scm")))
+(define selftest (lambda () (load "selftest.scm")))
+
 (display "done with init.scm")
+
+(selftest)

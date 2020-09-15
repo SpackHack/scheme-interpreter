@@ -396,6 +396,14 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 }
                 return pop_re();
             }
+            BuildInFunction::IsSymbole => {
+                if let ScmObject::Symbol(_) = pop() {
+                    set_return_value(ScmObject::True);
+                } else {
+                    set_return_value(ScmObject::False);
+                }
+                return pop_re();
+            }
             BuildInFunction::IsUserFunctions => {
                 if let ScmObject::UserFunction(_) = pop() {
                     set_return_value(ScmObject::True);
@@ -499,7 +507,7 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     return pop_re();
                 } else {
                     // TODO set Top env
-                    
+
                     push(env.clone());
                     push(input_stream);
                     push(env);

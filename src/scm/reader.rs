@@ -45,12 +45,11 @@ fn unread_vector(stream: &mut ScmStream, vec: Vec<char>) {
     }
 }
 
-pub fn scm_read( scm_stream: &mut ScmObject) -> ScmObject {
+pub fn scm_read(scm_stream: &mut ScmObject) -> ScmObject {
     if let ScmObject::Stream(s) = scm_stream {
         return read(s);
     }
     return ScmObject::Error(String::from("Read error Scm Stream is not a Stream"));
-   
 }
 
 fn read(mut stream: &mut ScmStream) -> ScmObject {
@@ -72,6 +71,10 @@ fn read(mut stream: &mut ScmStream) -> ScmObject {
         return read_chars(stream);
     } else if c == '(' {
         return read_list(stream);
+    } else if c == '\'' {
+        let a = read(stream);
+        let cons = ScmObject::new_cons(a, ScmObject::Nil);
+        return ScmObject::new_cons(ScmObject::Symbol(String::from("quote")), cons);
     } else if is_end_of_file(c) {
         return ScmObject::EndOfFile;
     }
