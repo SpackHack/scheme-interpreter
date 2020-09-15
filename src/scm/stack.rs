@@ -4,7 +4,7 @@ pub struct Stack<T> {
 
 //TODO: resize stack
 impl<T> Stack<T> {
-    pub const fn new(size: usize) -> Self {
+    pub const fn new() -> Self {
         Stack { data: Vec::new() }
     }
 
@@ -24,9 +24,5 @@ impl<T> Stack<T> {
             return Some(self.data.remove(index as usize));
         }
         None
-    }
-
-    pub fn clear(&mut self) {
-        self.data.clear();
     }
 }

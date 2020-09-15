@@ -2,9 +2,8 @@
 
 mod scm;
 
-use scm::environment::ScmEnvironment;
 use scm::scm_object::{BuildInFunction, BuildInSyntax, NumArgs, ScmObject};
-use scm::stream::{ScmStream, Stream};
+use scm::stream::StreamType;
 
 use std::env;
 use std::fs::File;
@@ -19,26 +18,42 @@ fn main() {
     let mut show_time: bool = false;
     let args: Vec<String> = env::args().collect();
 
-    let mut input_stream: ScmStream = ScmStream::new_stdin();
+    let mut input_stream: ScmObject = ScmObject::new_stream();
 
-    for (i, arg) in args.iter().enumerate() {
-        if arg == "-f" {
-            match File::open(args.get(i + 1).unwrap()) {
-                Ok(file) => {
-                    input_stream = ScmStream::new_file(file);
+    let mut index = 0;
+
+    while let Some(a) = args.get(index) {
+        match a.as_str() {
+            "-f" | "--file" => {
+                match File::open(args.get(index + 1).unwrap()) {
+                    Ok(file) => {
+                        input_stream = ScmObject::new_stream_file(file);
+                    }
+                    Err(e) => {
+                        eprintln!("ERROR: {}", e);
+                    }
                 }
-                Err(e) => {
-                    eprintln!("ERROR: {}", e);
-                }
+                index += 2;
             }
-        }
+            "-i" | "--init" => {
+                init = true;
+                index += 1;
+            }
+            "-t" | "--time" => {
+                show_time = true;
+                index += 1;
+            }
+            "-h" | "--help" => {
+                println!("-f, --file <filename> \t\t run file");
+                println!("-i, --init \t\t\t run init.scm on start");
+                println!("-t, --time \t\t\t show execution time");
+                println!("-h, --help \t\t\t show this message");
 
-        if arg == "-i" {
-            init = true;
-        }
-
-        if arg == "-t" {
-            show_time = true;
+                std::process::exit(0);
+            }
+            _ => {
+                index += 1;
+            }
         }
     }
 
@@ -46,26 +61,34 @@ fn main() {
     init_build_in(&mut top_env);
 
     if init {
+        let start = SystemTime::now();
         match File::open("./init.scm") {
             Ok(file) => {
-                run(ScmStream::new_file(file), top_env.clone(), false);
+                run(ScmObject::new_stream_file(file), top_env.clone(), false);
             }
             Err(err) => {
                 println!("ERR in read init: {}", err);
             }
+        }
+        let stop = SystemTime::now();
+        if show_time {
+            println!("exec time: {:?}", stop.duration_since(start));
         }
     }
 
     run(input_stream, top_env, show_time);
 }
 
-fn run(mut stream: ScmStream, mut env: ScmObject, show_time: bool) {
+fn run(mut scm_stream: ScmObject, env: ScmObject, show_time: bool) {
     loop {
-        if let Stream::STDIN(_) = stream.stream {
-            print!("> ");
-            io::stdout().flush().unwrap();
+        if let ScmObject::Stream(s) = &scm_stream {
+            if let StreamType::STDIN(_) = s.stream_type {
+                print!("> ");
+                io::stdout().flush().unwrap();
+            }
         }
-        let input: ScmObject = scm::reader::read(&mut stream);
+
+        let input: ScmObject = scm::reader::scm_read(&mut scm_stream);
 
         if let ScmObject::EndOfFile = input {
             break;

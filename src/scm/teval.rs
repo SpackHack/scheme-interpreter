@@ -1,12 +1,12 @@
-use super::environment::*;
+use std::fs::File;
 use super::printer::display_or_print;
 use super::scm_object::*;
 use super::stack::*;
 
 use std::rc::Rc;
 
-static mut STACK: Stack<ScmObject> = Stack::new(100);
-static mut RETURN_STACK: Stack<ReturnFunction> = Stack::new(100);
+static mut STACK: Stack<ScmObject> = Stack::new();
+static mut RETURN_STACK: Stack<ReturnFunction> = Stack::new();
 
 static mut RETURN_VALUE: ScmObject = ScmObject::Nil;
 
@@ -37,13 +37,6 @@ fn pop_re() -> Option<ReturnFunction> {
 
 fn push_re(func: ReturnFunction) {
     unsafe { RETURN_STACK.push(func) }
-}
-
-pub fn clear_all_stacks() {
-    unsafe {
-        STACK.clear();
-        RETURN_STACK.clear();
-    }
 }
 
 fn set_return_value(value: ScmObject) {
@@ -83,7 +76,7 @@ fn trampolin(function: fn() -> Option<ReturnFunction>) -> ScmObject {
 
 fn t_eval() -> Option<ReturnFunction> {
     let expression: ScmObject = pop();
-    let mut env: ScmObject = pop();
+    let env: ScmObject = pop();
 
     let a = expression.clone();
 
@@ -195,7 +188,7 @@ fn build_in_function1() -> Option<ReturnFunction> {
 }
 
 fn build_in_function2() -> Option<ReturnFunction> {
-    let mut env = pop();
+    let env = pop();
     let func: ScmObject = pop();
     let stack_index_of_first_arg = pop();
 
@@ -472,9 +465,48 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 return pop_re();
             }
             BuildInFunction::Load => {
-                let file_name = pop();
+                let scm_file_name = pop();
 
-                //TODO
+                let file_name: String;
+                let mut input_stream: ScmObject;
+                let expression: ScmObject;
+
+                if let ScmObject::Chars(c) = scm_file_name {
+                    file_name = c;
+                } else {
+                    set_return_value(ScmObject::Error(String::from(
+                        "fn load: arg not a String",
+                    )));
+                    return None;
+                }
+
+                match File::open(file_name) {
+                    Ok(file) => {
+                        input_stream = ScmObject::new_stream_file(file);
+                    }
+                    Err(_e) => {
+                        set_return_value(ScmObject::Error(String::from(
+                            "fn load: con not find File",
+                        )));
+                        return None;
+                    }
+                }
+
+                expression = super::reader::scm_read(&mut input_stream);
+
+                if let ScmObject::EndOfFile = expression {
+                    set_return_value(ScmObject::Void);
+                    return pop_re();
+                } else {
+                    // TODO set Top env
+                    
+                    push(env.clone());
+                    push(input_stream);
+                    push(env);
+                    push(expression);
+                    push_re(ReturnFunction::new(t_load));
+                    return Some(ReturnFunction::new(t_eval));
+                }
             }
             BuildInFunction::Open => {
                 //TODO
@@ -502,6 +534,27 @@ fn t_print(is_print: bool, stack_index_of_first_arg: i64) {
         display_or_print(s, is_print);
     }
     println!();
+}
+
+fn t_load() -> Option<ReturnFunction> {
+    let mut input_stream = pop();
+    let env = pop();
+
+    let expression = super::reader::scm_read(&mut input_stream);
+
+    if let ScmObject::EndOfFile = expression {
+        set_return_value(ScmObject::Void);
+        return pop_re();
+    } else {
+        // TODO set Top env
+        push(env.clone());
+        push(input_stream);
+        push(env);
+        push(expression);
+        push_re(ReturnFunction::new(t_load));
+        return Some(ReturnFunction::new(t_eval));
+    }
+
 }
 
 fn build_in_syntax() -> Option<ReturnFunction> {
@@ -755,10 +808,10 @@ fn t_set() -> Option<ReturnFunction> {
     let env = pop();
 
     unsafe {
-        Rc::get_mut_unchecked(&mut env.get_env()).set(synonym, &get_return_value());
+        set_return_value(
+            Rc::get_mut_unchecked(&mut env.get_env()).set(synonym, &get_return_value()),
+        );
     }
-
-    set_return_value(ScmObject::Void);
     return pop_re();
 }
 

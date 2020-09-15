@@ -1,5 +1,8 @@
 use super::environment::ScmEnvironment;
+use super::stream::{ScmStream, StreamType};
 use std::rc::Rc;
+use std::fs::File;
+use std::io::{stdin};
 
 #[derive(Clone)]
 pub enum ScmObject {
@@ -18,6 +21,7 @@ pub enum ScmObject {
     True,
     False,
     Env(Rc<ScmEnvironment>),
+    Stream(ScmStream),
 }
 
 #[derive(Clone)]
@@ -145,6 +149,20 @@ impl ScmObject {
         }))
     }
 
+    pub fn new_stream() -> Self {
+        ScmObject::Stream(ScmStream {
+            stream_type: StreamType::STDIN(Rc::new(stdin())),
+            read_char: vec![],
+        })
+    }
+
+    pub fn new_stream_file(file: File) -> Self {
+        ScmObject::Stream(ScmStream {
+            stream_type: StreamType::FILE(Rc::new(file)),
+            read_char: vec![],
+        })
+    }
+
     pub fn get_number(&self) -> i64 {
         if let ScmObject::Number(n) = self {
             return *n;
@@ -255,6 +273,10 @@ impl ScmObject {
                 false
             }
             ScmObject::Env(rc_env) => {
+                // TODO
+                return false;
+            }
+            ScmObject::Stream(stream) => {
                 // TODO
                 return false;
             }

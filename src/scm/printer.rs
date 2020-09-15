@@ -26,7 +26,7 @@ pub fn display_or_print(scm: ScmObject, do_print: bool) {
 fn print(input: ScmObject, do_print: bool) {
     match input {
         ScmObject::Error(error) => {
-            print!("{}", error);
+            print!("Error => {}", error);
         }
         ScmObject::Number(numbers) => {
             print!("{}", numbers);

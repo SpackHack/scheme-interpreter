@@ -30,21 +30,24 @@ impl ScmEnvironment {
         &self.bindings.push(ScmObject::new_cons(key, value.clone()));
     }
 
-    pub fn set(&mut self, key: ScmObject, value: &ScmObject) {
+    pub fn set(&mut self, key: ScmObject, value: &ScmObject) -> ScmObject{
         for elem in self.bindings.iter_mut() {
             if let ScmObject::Cons(cons) = elem {
                 if (*cons.car).equal(&key) {
                     *cons.cdr = value.clone();
-                    break;
+                    return ScmObject::Void;
                 }
             }
         }
 
         if let Some(mut e) = self.parent_env.iter_mut().next() {
             unsafe {
-                Rc::get_mut_unchecked(&mut e).set(key, value);
+                return Rc::get_mut_unchecked(&mut e).set(key, value);
             }
+        } else {
+            return ScmObject::Error(String::from("Symbole not found"));
         }
+        
     }
 
     pub fn get(&mut self, key: ScmObject) -> ScmObject {
@@ -60,9 +63,7 @@ impl ScmEnvironment {
                 return Rc::get_mut_unchecked(&mut e).get(key);
             }
         }
-        println!("Symbole not found");
-        self.print();
-        ScmObject::Null
+        ScmObject::Error(String::from("Symbole not found"))
     }
 
     pub fn print(&mut self) {

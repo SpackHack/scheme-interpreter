@@ -69,6 +69,3 @@ Scheme Interpreter in Rust
 | <=       | bool   |     |
 | for-loop | void   |     |
 
-## TODO
-
-- Function call itself

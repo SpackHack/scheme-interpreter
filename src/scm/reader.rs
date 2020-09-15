@@ -1,7 +1,8 @@
 use super::memory::new_symbole;
-use super::scm_object::{ScmObject};
+use super::scm_object::ScmObject;
 use super::stream::*;
 use std::io::Read;
+use std::rc::Rc;
 
 fn get_char(scm_stream: &mut ScmStream) -> Option<char> {
     let mut buf = [0];
@@ -11,12 +12,15 @@ fn get_char(scm_stream: &mut ScmStream) -> Option<char> {
         return scm_stream.read_char.pop();
     }
 
-    match &mut scm_stream.stream {
-        Stream::FILE(f) => {
-            result = f.read(&mut buf);
+    match &mut scm_stream.stream_type {
+        StreamType::FILE(f) => {
+            let file = Rc::get_mut(f).unwrap();
+
+            result = file.read(&mut buf);
         }
-        Stream::STDIN(a) => {
-            result = a.read(&mut buf);
+        StreamType::STDIN(s) => {
+            let input = Rc::get_mut(s).unwrap();
+            result = input.read(&mut buf);
         }
     }
 
@@ -41,7 +45,15 @@ fn unread_vector(stream: &mut ScmStream, vec: Vec<char>) {
     }
 }
 
-pub fn read(mut stream: &mut ScmStream) -> ScmObject {
+pub fn scm_read( scm_stream: &mut ScmObject) -> ScmObject {
+    if let ScmObject::Stream(s) = scm_stream {
+        return read(s);
+    }
+    return ScmObject::Error(String::from("Read error Scm Stream is not a Stream"));
+   
+}
+
+fn read(mut stream: &mut ScmStream) -> ScmObject {
     let mut again: bool = true;
     let mut c: char = skip_whitespace(stream);
 
