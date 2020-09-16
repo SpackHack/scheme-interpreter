@@ -2,7 +2,6 @@ pub struct Stack<T> {
     data: Vec<T>,
 }
 
-//TODO: resize stack
 impl<T> Stack<T> {
     pub const fn new() -> Self {
         Stack { data: Vec::new() }

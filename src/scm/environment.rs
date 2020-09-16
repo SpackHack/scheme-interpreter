@@ -1,16 +1,15 @@
 use super::printer::display_or_print;
 use super::scm_object::*;
 
+use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
 
-// TODO: add hashing
-
 #[derive(Clone)]
 pub struct ScmEnvironment {
     pub parent_env: Option<Rc<ScmEnvironment>>,
-    pub bindings: Vec<ScmObject>,
+    pub bindings: HashMap<String, ScmObject>,
 }
 
 impl ScmEnvironment {
@@ -19,24 +18,15 @@ impl ScmEnvironment {
     }
 
     pub fn define(&mut self, key: ScmObject, value: &ScmObject) {
-        for elem in self.bindings.iter_mut() {
-            if let ScmObject::Cons(cons) = elem {
-                if (*cons.car).equal(&key) {
-                    *cons.cdr = value.clone();
-                    return;
-                }
-            }
+        if let ScmObject::Symbol(s) = key {
+            self.bindings.insert(s, value.clone());
         }
-        &self.bindings.push(ScmObject::new_cons(key, value.clone()));
     }
 
-    pub fn set(&mut self, key: ScmObject, value: &ScmObject) -> ScmObject{
-        for elem in self.bindings.iter_mut() {
-            if let ScmObject::Cons(cons) = elem {
-                if (*cons.car).equal(&key) {
-                    *cons.cdr = value.clone();
-                    return ScmObject::Void;
-                }
+    pub fn set(&mut self, key: ScmObject, value: &ScmObject) -> ScmObject {
+        if let ScmObject::Symbol(s) = key.clone() {
+            if let Some(_) = self.bindings.get(&s) {
+                self.bindings.insert(s, value.clone());
             }
         }
 
@@ -47,17 +37,15 @@ impl ScmEnvironment {
         } else {
             return ScmObject::Error(String::from("Symbole not found"));
         }
-        
     }
 
     pub fn get(&mut self, key: ScmObject) -> ScmObject {
-        for elem in self.bindings.iter_mut() {
-            if let ScmObject::Cons(cons) = elem {
-                if (*cons.car).equal(&key) {
-                    return *cons.cdr.clone();
-                }
+        if let ScmObject::Symbol(s) = key.clone() {
+            if let Some(v) = self.bindings.get(&s) {
+                return v.clone();
             }
         }
+
         if let Some(mut e) = self.parent_env.iter_mut().next() {
             unsafe {
                 return Rc::get_mut_unchecked(&mut e).get(key);
@@ -68,14 +56,11 @@ impl ScmEnvironment {
 
     pub fn print(&mut self) {
         println!("Print Env:");
-        for e in self.bindings.iter() {
-            if let ScmObject::Cons(cons) = e {
-                print!("Key: ");
-                display_or_print(*cons.car.clone(), false);
-                print!("\t\tValue:");
-                display_or_print(*cons.cdr.clone(), false);
-                println!();
-            }
+        for (key, value) in self.bindings.iter() {
+            print!("Key: {}", key);
+            print!("\t\tValue:");
+            display_or_print(value.clone(), false);
+            println!();
         }
         if let Some(mut s) = self.parent_env.iter_mut().next() {
             println!("Parent Env");

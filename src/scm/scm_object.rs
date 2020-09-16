@@ -3,6 +3,8 @@ use super::stream::{ScmStream, StreamType};
 use std::fs::File;
 use std::io::stdin;
 use std::rc::Rc;
+use std::collections::HashMap;
+
 
 #[derive(Clone)]
 pub enum ScmObject {
@@ -154,7 +156,7 @@ impl ScmObject {
 
     pub fn new_env() -> Self {
         ScmObject::Env(Rc::new(ScmEnvironment {
-            bindings: Vec::new(),
+            bindings: HashMap::new(),
             parent_env: None,
         }))
     }
