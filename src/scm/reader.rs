@@ -40,7 +40,7 @@ fn unread_char(stream: &mut ScmStream, c: char) {
 }
 
 fn unread_string(stream: &mut ScmStream, vec: String) {
-    for (index, c) in vec.char_indices() {
+    for (_, c) in vec.char_indices() {
         unread_char(stream, c);
     }
 }

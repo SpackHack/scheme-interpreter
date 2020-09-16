@@ -241,39 +241,15 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 return pop_re();
             }
             BuildInFunction::Minus => {
-                let mut sum: f64 = 0.0;
-                let mut arg;
+                let mut result: f64 = 0.0;
                 let mut is_integer: bool = true;
 
-                if arg_count == 1 {
-                    match pop() {
-                        ScmObject::Integer(number) => {
-                            set_return_value(ScmObject::Integer(number * -1))
-                        }
+                if let Some(s) = get_stack_element(index_first_arg) {
+                    match s {
+                        ScmObject::Integer(number) => result = number as f64,
                         ScmObject::Float(number) => {
-                            set_return_value(ScmObject::Float(number * -1.0))
-                        }
-                        _ => {
-                            set_return_value(ScmObject::Error(String::from(
-                                "fn -: arg not a number",
-                            )));
-                            return None;
-                        }
-                    }
-                    return pop_re();
-                }
-
-                while arg_count > 1 {
-                    arg = pop();
-                    arg_count -= 1;
-                    match arg {
-                        // TODO: overflow
-                        ScmObject::Integer(number) => {
-                            sum -= number as f64;
-                        }
-                        ScmObject::Float(number) => {
-                            sum -= number;
                             is_integer = false;
+                            result = number;
                         }
                         _ => {
                             set_return_value(ScmObject::Error(String::from(
@@ -282,26 +258,31 @@ fn build_in_function2() -> Option<ReturnFunction> {
                             return None;
                         }
                     }
+                    if arg_count == 1 {
+                        result *= -1.0;
+                    }
                 }
 
-                match pop() {
-                    ScmObject::Integer(number) => {
-                        sum += number as f64;
-                    }
-                    ScmObject::Float(number) => {
-                        sum += number;
-                        is_integer = false;
-                    }
-                    _ => {
-                        set_return_value(ScmObject::Error(String::from("fn -: arg not a number")));
-                        return None;
+                while let Some(s) = get_stack_element(index_first_arg) {
+                    match s {
+                        ScmObject::Integer(number) => result -= number as f64,
+                        ScmObject::Float(number) => {
+                            is_integer = false;
+                            result -= number;
+                        }
+                        _ => {
+                            set_return_value(ScmObject::Error(String::from(
+                                "fn -: arg not a number",
+                            )));
+                            return None;
+                        }
                     }
                 }
 
                 if is_integer {
-                    set_return_value(ScmObject::Integer(sum as i64));
+                    set_return_value(ScmObject::Integer(result as i64));
                 } else {
-                    set_return_value(ScmObject::Float(sum));
+                    set_return_value(ScmObject::Float(result));
                 }
                 return pop_re();
             }
@@ -759,6 +740,9 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     push_re(ReturnFunction::new(t_read));
                     return Some(ReturnFunction::new(t_eval));
                 }
+            }
+            BuildInFunction::Exit => {
+                std::process::exit(0);
             }
         }
     }

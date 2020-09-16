@@ -79,6 +79,7 @@ pub enum BuildInFunction {
     FnArg,
     List,
     Load,
+    Exit,
 }
 
 #[derive(Clone, PartialEq)]
@@ -301,11 +302,11 @@ impl ScmObject {
                 }
                 false
             }
-            ScmObject::Env(rc_env) => {
+            ScmObject::Env(_) => {
                 // TODO
                 return false;
             }
-            ScmObject::Stream(stream) => {
+            ScmObject::Stream(_) => {
                 // TODO
                 return false;
             }

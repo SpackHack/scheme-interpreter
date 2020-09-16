@@ -28,40 +28,35 @@ Scheme Interpreter in Rust
 - if
 - begin
 
-## Buildinfunctions
+## Functions
 
-| name      | return    |            |
-| --------- | --------- | ---------- |
-| \+        | number    | add number |
-| \-        | number    |            |
-| \*        | number    |            |
-| /         | number    |            |
-| display   | Void      |            |
-| print     | Void      |            |
-| print-env | Void      |            |
-| cons      | cons      |            |
-| car       | ScmObject |            |
-| cdr       | ScmObject |            |
-| eq        | bool      |            |
-| \>        | bool      |            |
-| string?   | bool      |            |
-| cons?     | bool      |            |
-| number?   | bool      |            |
-| integer?  | bool      |            |
-| float?    | bool      |            |
-| function? | bool      |            |
-| null?     | bool      |            |
-| symbol?   | bool      |            |
-| =         | bool      |            |
-| fn-body   | list      |            |
-| fn-arg    | list      |            |
-| list      | list      |            |
-| load      |           |            |
-| open      |           |            |
-| close     |           |            |
-| read      |           |            |
-| read-char |           |            |
-| read-line |           |            |
+| name      | return    | Parameter          |            |
+| --------- | --------- | ------------------ | ---------- |
+| \+        | number    | Integers or Floats | add number |
+| \-        | number    |                    |
+| \*        | number    |                    |
+| /         | number    |                    |
+| display   | Void      |                    |
+| print     | Void      |                    |
+| print-env | Void      |                    |
+| cons      | cons      |                    |
+| car       | ScmObject |                    |
+| cdr       | ScmObject |                    |
+| eq        | bool      |                    |
+| \>        | bool      |                    |
+| string?   | bool      |                    |
+| cons?     | bool      |                    |
+| number?   | bool      |                    |
+| integer?  | bool      |                    |
+| float?    | bool      |                    |
+| function? | bool      |                    |
+| null?     | bool      |                    |
+| symbol?   | bool      |                    |
+| =         | bool      |                    |
+| fn-body   | list      |                    |
+| fn-arg    | list      |                    |
+| list      | list      |                    |
+| load      |           |                    |
 
 ## Function in Init.scm
 

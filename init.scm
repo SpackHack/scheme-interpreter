@@ -6,8 +6,6 @@
 (define != (lambda (a b) (not (= a b))))
 (define equal? (lambda (a b)  (eq? a b)))
 
-
-
 (define for-loop (lambda (start stop fn)
     (if (> start stop)
        #v

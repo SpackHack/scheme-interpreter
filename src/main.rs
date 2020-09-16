@@ -310,5 +310,13 @@ fn init_build_in(scm_object: &mut ScmObject) {
                 NumArgs::Unlimited as i64,
             ),
         );
+        env.define(
+            ScmObject::Symbol(String::from("exit")),
+            &ScmObject::new_fn(
+                BuildInFunction::Exit,
+                String::from("Exit"),
+                0,
+            ),
+        );
     }
 }
