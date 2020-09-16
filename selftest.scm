@@ -27,18 +27,22 @@
         (if 
             boolean
 	        (begin
-	            (display (nameOrUnnamedIfNil nameOfTest) ": ok\n")
+	            (display (nameOrUnnamedIfNil nameOfTest) ": ok [" lineNr "]")
 	        )
 	        (begin
-	            (display (nameOrUnnamedIfNil nameOfTest) ": **** FAILED [" lineNr "]\n")
+	            (display (nameOrUnnamedIfNil nameOfTest) ": **** FAILED [" lineNr "]")
 	            (abort)
 	        )
         )
     )
 )
 
-(define ASSERT (lambda (boolean nameOfTest)
-    (ASSERT_L "?" boolean nameOfTest)))
+(define ASSERT 
+    (lambda 
+        (boolean nameOfTest)
+        (ASSERT_L "?" boolean nameOfTest)
+    )
+)
 
 (define ASSERT_RSLT (lambda ( function expected)
     (define result (function))
@@ -105,38 +109,38 @@
 (ASSERT (eq? (number? "1") #f) "number?")
 (ASSERT (eq? (number? '()) #f) "number?")
 (ASSERT (eq? (number? 1234) #t) "number?")
-;(ASSERT (eq? (number? 1234.5) #t) "number?")
+(ASSERT (eq? (number? 1234.5) #t) "number?")
 (ASSERT (eq? (number? '(1 2 3)) #f) "number?")
 
 ;;
 ;; float?
 ;;
-; (ASSERT (eq? (float? "") #f) "float?")
-; (ASSERT (eq? (float? 'a) #f) "float?")
-; (ASSERT (eq? (float? "1") #f) "float?")
-; (ASSERT (eq? (float? '()) #f) "float?")
-; (ASSERT (eq? (float? 1234) #f) "float?")
-; (ASSERT (eq? (float? 1234.5) #t) "float?")
-; (ASSERT (eq? (float? '(1 2 3)) #f) "float?")
+(ASSERT (eq? (float? "") #f) "float?")
+(ASSERT (eq? (float? 'a) #f) "float?")
+(ASSERT (eq? (float? "1") #f) "float?")
+(ASSERT (eq? (float? '()) #f) "float?")
+(ASSERT (eq? (float? 1234) #f) "float?")
+(ASSERT (eq? (float? 1234.5) #t) "float?")
+(ASSERT (eq? (float? '(1 2 3)) #f) "float?")
 
 ;;
 ;; integer?
 ;;
-; (ASSERT (eq? (integer? "") #f) "integer?")
-; (ASSERT (eq? (integer? 'a) #f) "integer?")
-; (ASSERT (eq? (integer? "1") #f) "integer?")
-; (ASSERT (eq? (integer? '()) #f) "integer?")
-; (ASSERT (eq? (integer? 1234) #t) "integer?")
-; (ASSERT (eq? (integer? 1234.5) #f) "integer?")
-; (ASSERT (eq? (integer? '(1 2 3)) #f) "integer?")
+(ASSERT (eq? (integer? "") #f) "integer?")
+(ASSERT (eq? (integer? 'a) #f) "integer?")
+(ASSERT (eq? (integer? "1") #f) "integer?")
+(ASSERT (eq? (integer? '()) #f) "integer?")
+(ASSERT (eq? (integer? 1234) #t) "integer?")
+(ASSERT (eq? (integer? 1234.5) #f) "integer?")
+(ASSERT (eq? (integer? '(1 2 3)) #f) "integer?")
 
 ;;
 ;; function?
 ;;
-; (ASSERT (eq? (function? "") #f) "function?")
-; (ASSERT (eq? (function? '(1 2 3)) #f) "function?")
-; (ASSERT (eq? (function? +) #t) "function?")
-; (ASSERT (eq? (function? (lambda () #void)) #t) "function?")
+(ASSERT (eq? (function? "") #f) "function?")
+(ASSERT (eq? (function? '(1 2 3)) #f) "function?")
+(ASSERT (eq? (function? +) #t) "function?")
+(ASSERT (eq? (function? (lambda () #void)) #t) "function?")
 
 ;;
 ;; macro?
@@ -170,9 +174,8 @@
 ;;
 ;; null?
 ;;
-;TODO
-; (ASSERT (eq? (null? '()) #t) "null?")
-; (ASSERT (eq? (null? '(1 2 3)) #f) "null?")
+(ASSERT (eq? (null? '()) #t) "null?")
+(ASSERT (eq? (null? '(1 2 3)) #f) "null?")
 
 ;;
 ;; char?
@@ -221,15 +224,15 @@
 (ASSERT (eq? (< 10 9.0) #f) "<")
 (ASSERT (eq? (< 10.0 9.0) #f) "<")
 
-(ASSERT_L #__LINE__ (eq? (< -2 -1) #t) "<")
-(ASSERT_L #__LINE__ (eq? (< -1 0) #t) "<")
-(ASSERT_L #__LINE__ (eq? (< -1 1) #t) "<")
-(ASSERT_L #__LINE__ (eq? (< 0 1) #t) "<")
+(ASSERT_L 1 (eq? (< -2 -1) #t) "<")
+(ASSERT_L 2 (eq? (< -1 0) #t) "<")
+(ASSERT_L 3 (eq? (< -1 1) #t) "<")
+(ASSERT_L 4 (eq? (< 0 1) #t) "<")
 
-(ASSERT_L #__LINE__ (eq? (< -1 -2) #f) "<")
-(ASSERT_L #__LINE__ (eq? (< 0 -1) #f) "<")
-(ASSERT_L #__LINE__ (eq? (< 1 -1) #f) "<")
-(ASSERT_L #__LINE__ (eq? (< 1 0) #f) "<")
+(ASSERT_L 5 (eq? (< -1 -2) #f) "<")
+(ASSERT_L 6 (eq? (< 0 -1) #f) "<")
+(ASSERT_L 7 (eq? (< 1 -1) #f) "<")
+(ASSERT_L 8 (eq? (< 1 0) #f) "<")
 
 ;;
 ;; >
@@ -443,6 +446,10 @@
 (ASSERT (equal? (append '() '(1 2 3)) '(1 2 3)) "append")
 (ASSERT (equal? (append '() '(1 2 3) ) '(1 2 3)) "append")
 (ASSERT (equal? (append '(1 2 3) '(4 5 6) ) '(1 2 3 4 5 6)) "append")
+
+
+;-----Done----
+; TODO
 
 ;;
 ;; reverse

@@ -55,6 +55,7 @@ pub enum BuildInFunction {
     Print,
     PrintEnv,
     Times,
+    Div,
     Cons,
     Car,
     Cdr,
@@ -66,19 +67,18 @@ pub enum BuildInFunction {
     IsInteger,
     IsFloat,
     IsFunction,
-    IsSyntax,
-    IsUserFunctions,
     IsSymbole,
+    IsNull,
+    StringLength,
+    EqualString,
+    StringAppend,
+    Length,
+    Append,
     EqualNumber,
     FnBody,
     FnArg,
     List,
     Load,
-    Open,
-    Close,
-    Read,
-    ReadChar,
-    ReadLine,
 }
 
 #[derive(Clone, PartialEq)]
@@ -172,18 +172,11 @@ impl ScmObject {
         })
     }
 
-    pub fn get_Integer(&self) -> i64 {
+    pub fn get_integer(&self) -> i64 {
         if let ScmObject::Integer(n) = self {
             return *n;
         }
         panic!("get Integer of not a Integer");
-    }
-
-    pub fn get_Float(&self) -> f64 {
-        if let ScmObject::Float(n) = self {
-            return *n;
-        }
-        panic!("get Float of not a Float");
     }
 
     pub fn get_env(&self) -> Rc<ScmEnvironment> {
@@ -223,9 +216,20 @@ impl ScmObject {
                 return false;
             }
             ScmObject::Cons(cons) => {
-                //TODO: cons equal
                 if let ScmObject::Cons(co) = scm {
-                    return true;
+                    if !co.car.equal(&*cons.car) {
+                        return false;
+                    }
+                    if let ScmObject::Nil = *cons.cdr {
+                        if let ScmObject::Nil = *co.cdr {
+                            return true;
+                        }
+                        return false;
+                    }
+                    if let ScmObject::Nil = *co.cdr {
+                        return false;
+                    }
+                    return cons.cdr.equal(&*co.cdr);
                 }
                 return false;
             }
@@ -260,9 +264,10 @@ impl ScmObject {
                 return false;
             }
             ScmObject::UserFunction(function) => {
-                //TODO: user function equal
                 if let ScmObject::UserFunction(func) = scm {
-                    return true;
+                    if function.arg_list.equal(&func.arg_list) && function.body_list.equal(&func.body_list) {
+                        return true;
+                    }
                 }
                 return false;
             }

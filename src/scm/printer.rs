@@ -80,6 +80,9 @@ fn print(input: ScmObject, do_print: bool) {
         ScmObject::False => {
             print!("#F");
         }
+        ScmObject::Stream(s) => {
+            print!("Input Stream");
+        }
         _ => print!("Print Not implemented"),
     }
 }

@@ -82,7 +82,11 @@ fn read(mut stream: &mut ScmStream) -> ScmObject {
         return read_list(stream);
     } else if c == '\'' {
         let a = read(stream);
-        let cons = ScmObject::new_cons(a, ScmObject::Nil);
+        let cons: ScmObject;
+        match a {
+            ScmObject::Nil => return ScmObject::Null,
+            _ => cons = ScmObject::new_cons(a, ScmObject::Nil),
+        }
         return ScmObject::new_cons(ScmObject::Symbol(String::from("quote")), cons);
     } else if is_end_of_file(&c) {
         return ScmObject::EndOfFile;
@@ -252,7 +256,7 @@ fn is_end_of_file(character: &char) -> bool {
 
 fn is_type_number(mut character: char, scm_stream: &mut ScmStream) -> Option<NumberType> {
     let mut chars: String = String::from("");
-    let mut isInteger: bool = true;
+    let mut is_integer: bool = true;
 
     while !is_end_of_type(&character) {
         chars.push(character);
@@ -264,21 +268,31 @@ fn is_type_number(mut character: char, scm_stream: &mut ScmStream) -> Option<Num
             '-' => {
                 if index != 0 {
                     chars.push(character);
+                    chars.remove(0);
                     unread_string(scm_stream, chars);
                     return None;
+                } else {
+                    if let None = chars.chars().nth(index + 1) {
+                        chars.push(character);
+                        chars.remove(0);
+                        unread_string(scm_stream, chars);
+                        return None;
+                    }
                 }
             }
             '.' => {
-                if !isInteger || index == 0 {
+                if !is_integer || index == 0 {
                     chars.push(character);
+                    chars.remove(0);
                     unread_string(scm_stream, chars);
                     return None;
                 }
-                isInteger = false;
+                is_integer = false;
             }
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {}
             _ => {
                 chars.push(character);
+                chars.remove(0);
                 unread_string(scm_stream, chars);
                 return None;
             }
@@ -287,7 +301,7 @@ fn is_type_number(mut character: char, scm_stream: &mut ScmStream) -> Option<Num
 
     unread_char(scm_stream, character);
 
-    if isInteger {
+    if is_integer {
         return Some(NumberType::Integer(chars));
     } else {
         return Some(NumberType::Float(chars));

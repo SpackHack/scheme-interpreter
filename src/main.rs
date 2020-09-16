@@ -179,6 +179,14 @@ fn init_build_in(scm_object: &mut ScmObject) {
             ),
         );
         env.define(
+            ScmObject::Symbol(String::from("/")),
+            &ScmObject::new_fn(
+                BuildInFunction::Div,
+                String::from("/"),
+                NumArgs::Unlimited as i64,
+            ),
+        );
+        env.define(
             ScmObject::Symbol(String::from("cons")),
             &ScmObject::new_fn(BuildInFunction::Cons, String::from("cons"), 2),
         );
@@ -211,24 +219,64 @@ fn init_build_in(scm_object: &mut ScmObject) {
             &ScmObject::new_fn(BuildInFunction::IsNumber, String::from("is-number"), 1),
         );
         env.define(
-            ScmObject::Symbol(String::from("is-buildinfn")),
+            ScmObject::Symbol(String::from("integer?")),
+            &ScmObject::new_fn(BuildInFunction::IsInteger, String::from("is-number"), 1),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("float?")),
+            &ScmObject::new_fn(BuildInFunction::IsFloat, String::from("is-number"), 1),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("function?")),
             &ScmObject::new_fn(BuildInFunction::IsFunction, String::from("is-function"), 1),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("is-syntax")),
-            &ScmObject::new_fn(BuildInFunction::IsSyntax, String::from("is-syntax"), 1),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("is-fn")),
-            &ScmObject::new_fn(
-                BuildInFunction::IsUserFunctions,
-                String::from("is-user_function"),
-                1,
-            ),
         );
         env.define(
             ScmObject::Symbol(String::from("symbol?")),
             &ScmObject::new_fn(BuildInFunction::IsSymbole, String::from("is-symbol"), 1),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("null?")),
+            &ScmObject::new_fn(BuildInFunction::IsNull, String::from("is-null"), 1),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("string-length")),
+            &ScmObject::new_fn(
+                BuildInFunction::StringLength,
+                String::from("String length"),
+                1,
+            ),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("string=?")),
+            &ScmObject::new_fn(
+                BuildInFunction::EqualString,
+                String::from("String equal"),
+                2,
+            ),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("string-append")),
+            &ScmObject::new_fn(
+                BuildInFunction::StringAppend,
+                String::from("String Append"),
+                NumArgs::Unlimited as i64,
+            ),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("length")),
+            &ScmObject::new_fn(
+                BuildInFunction::Length,
+                String::from("Length"),
+                1,
+            ),
+        );
+        env.define(
+            ScmObject::Symbol(String::from("append")),
+            &ScmObject::new_fn(
+                BuildInFunction::Append,
+                String::from("append"),
+                2,
+            ),
         );
         env.define(
             ScmObject::Symbol(String::from("=")),
@@ -259,46 +307,6 @@ fn init_build_in(scm_object: &mut ScmObject) {
             &ScmObject::new_fn(
                 BuildInFunction::Load,
                 String::from("load"),
-                NumArgs::Unlimited as i64,
-            ),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("open")),
-            &ScmObject::new_fn(
-                BuildInFunction::Open,
-                String::from("open"),
-                NumArgs::Unlimited as i64,
-            ),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("close")),
-            &ScmObject::new_fn(
-                BuildInFunction::Close,
-                String::from("close"),
-                NumArgs::Unlimited as i64,
-            ),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("read")),
-            &ScmObject::new_fn(
-                BuildInFunction::Read,
-                String::from("read"),
-                NumArgs::Unlimited as i64,
-            ),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("read-char")),
-            &ScmObject::new_fn(
-                BuildInFunction::ReadChar,
-                String::from("read-char"),
-                NumArgs::Unlimited as i64,
-            ),
-        );
-        env.define(
-            ScmObject::Symbol(String::from("read-line")),
-            &ScmObject::new_fn(
-                BuildInFunction::ReadLine,
-                String::from("read-line"),
                 NumArgs::Unlimited as i64,
             ),
         );
