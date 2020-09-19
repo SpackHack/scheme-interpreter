@@ -1,10 +1,9 @@
 use super::environment::ScmEnvironment;
 use super::stream::{ScmStream, StreamType};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::stdin;
 use std::rc::Rc;
-use std::collections::HashMap;
-
 
 #[derive(Clone)]
 pub enum ScmObject {
@@ -268,7 +267,9 @@ impl ScmObject {
             }
             ScmObject::UserFunction(function) => {
                 if let ScmObject::UserFunction(func) = scm {
-                    if function.arg_list.equal(&func.arg_list) && function.body_list.equal(&func.body_list) {
+                    if function.arg_list.equal(&func.arg_list)
+                        && function.body_list.equal(&func.body_list)
+                    {
                         return true;
                     }
                 }
@@ -305,11 +306,9 @@ impl ScmObject {
                 false
             }
             ScmObject::Env(_) => {
-                // TODO
                 return false;
             }
             ScmObject::Stream(_) => {
-                // TODO
                 return false;
             }
         }

@@ -1007,7 +1007,6 @@ fn build_in_syntax() -> Option<ReturnFunction> {
             }
         }
     }
-
     return None;
 }
 

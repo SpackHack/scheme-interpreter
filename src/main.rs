@@ -264,19 +264,11 @@ fn init_build_in(scm_object: &mut ScmObject) {
         );
         env.define(
             ScmObject::Symbol(String::from("length")),
-            &ScmObject::new_fn(
-                BuildInFunction::Length,
-                String::from("Length"),
-                1,
-            ),
+            &ScmObject::new_fn(BuildInFunction::Length, String::from("Length"), 1),
         );
         env.define(
             ScmObject::Symbol(String::from("append")),
-            &ScmObject::new_fn(
-                BuildInFunction::Append,
-                String::from("append"),
-                2,
-            ),
+            &ScmObject::new_fn(BuildInFunction::Append, String::from("append"), 2),
         );
         env.define(
             ScmObject::Symbol(String::from("=")),
@@ -312,11 +304,7 @@ fn init_build_in(scm_object: &mut ScmObject) {
         );
         env.define(
             ScmObject::Symbol(String::from("exit")),
-            &ScmObject::new_fn(
-                BuildInFunction::Exit,
-                String::from("Exit"),
-                0,
-            ),
+            &ScmObject::new_fn(BuildInFunction::Exit, String::from("Exit"), 0),
         );
     }
 }
