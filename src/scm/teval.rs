@@ -218,7 +218,6 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     arg = pop();
                     arg_count -= 1;
                     match arg {
-                        // TODO: overflow
                         ScmObject::Integer(number) => {
                             sum += number as f64;
                         }
@@ -309,7 +308,6 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 let mut is_integer: bool = true;
 
                 while arg_count > 0 {
-                    // TODO: overflow
                     arg = pop();
                     arg_count -= 1;
                     match arg {
