@@ -1,4 +1,5 @@
 use super::scm_object::{Cons, ScmObject};
+use super::stream::StreamType;
 use std::io;
 use std::io::Write;
 
@@ -80,6 +81,17 @@ fn print(input: ScmObject, do_print: bool) {
         ScmObject::False => {
             print!("#F");
         }
+        ScmObject::Stream(stream) => match stream.stream_type {
+            StreamType::STDIN(_) => {
+                print!("Stream stdin");
+            }
+            StreamType::FILE(_) => {
+                print!("Stream File");
+            }
+            StreamType::None => {
+                print!("Stream Closed");
+            }
+        },
         _ => print!("Print Not implemented"),
     }
 }

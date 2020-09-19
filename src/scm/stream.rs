@@ -12,4 +12,11 @@ pub struct ScmStream {
 pub enum StreamType {
     FILE(Rc<File>),
     STDIN(Rc<Stdin>),
+    None,
+}
+
+impl ScmStream {
+    pub fn close(&mut self) {
+        self.stream_type = StreamType::None;
+    }
 }

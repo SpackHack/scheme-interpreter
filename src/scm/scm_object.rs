@@ -80,6 +80,10 @@ pub enum BuildInFunction {
     FnArg,
     List,
     Load,
+    Open,
+    Read,
+    Close,
+    RandomNumber,
     Exit,
 }
 

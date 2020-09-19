@@ -51,7 +51,7 @@ impl ScmEnvironment {
                 return Rc::get_mut_unchecked(&mut e).get(key);
             }
         }
-        ScmObject::Error(String::from("Symbole not found"))
+        ScmObject::Null
     }
 
     pub fn print(&mut self) {

@@ -20,7 +20,6 @@
 
 (define reload (lambda () (load "init.scm")))
 (define selftest (lambda () (load "selftest.scm")))
+(define game (lambda () (load "game.scm")))
 
 (display "done with init.scm")
-
-;(selftest)

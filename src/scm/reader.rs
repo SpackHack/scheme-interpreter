@@ -14,13 +14,23 @@ fn get_char(scm_stream: &mut ScmStream) -> Option<char> {
 
     match &mut scm_stream.stream_type {
         StreamType::FILE(f) => {
-            let file = Rc::get_mut(f).unwrap();
+            let file;
+            unsafe {
+                file = Rc::get_mut_unchecked(f);
+            }
 
             result = file.read(&mut buf);
         }
         StreamType::STDIN(s) => {
-            let input = Rc::get_mut(s).unwrap();
+            let input;
+            unsafe {
+                input = Rc::get_mut_unchecked(s);
+            }
             result = input.read(&mut buf);
+        }
+        StreamType::None => {
+            println!("Read Error no Stream");
+            return None;
         }
     }
 

@@ -2,6 +2,8 @@ use super::printer::display_or_print;
 use super::scm_object::*;
 use super::stack::*;
 use std::fs::File;
+extern crate rand;
+use rand::Rng;
 
 use std::rc::Rc;
 
@@ -599,14 +601,17 @@ fn build_in_function2() -> Option<ReturnFunction> {
                 } else {
                     while let ScmObject::Cons(c) = arg {
                         if let ScmObject::Nil = *c.cdr {
-                            if let ScmObject::Null = arg2 {
-                                set_return_value(arg1);
-                                return pop_re();
-                            } else {
-                                *c.cdr = arg2;
-                                set_return_value(arg1);
-                                return pop_re();
+                            match arg2 {
+                                ScmObject::Null => {}
+                                ScmObject::Cons(_) => {
+                                    *c.cdr = arg2;
+                                }
+                                _ => {
+                                    *c.cdr = ScmObject::new_cons(arg2, ScmObject::Nil);
+                                }
                             }
+                            set_return_value(arg1);
+                            return pop_re();
                         } else {
                             arg = &mut *c.cdr;
                         }
@@ -731,14 +736,82 @@ fn build_in_function2() -> Option<ReturnFunction> {
                     set_return_value(ScmObject::Void);
                     return pop_re();
                 } else {
-                    // TODO set Top env
-
                     push(env.clone());
                     push(input_stream);
                     push(env);
                     push(expression);
                     push_re(ReturnFunction::new(t_read));
                     return Some(ReturnFunction::new(t_eval));
+                }
+            }
+            BuildInFunction::Open => {
+                let arg = pop();
+                let file_name: String;
+
+                if let ScmObject::Chars(c) = arg {
+                    file_name = c;
+                } else {
+                    set_return_value(ScmObject::Error(String::from("fn open: arg not a String")));
+                    return None;
+                }
+
+                if file_name.is_empty() {
+                    set_return_value(ScmObject::new_stream());
+                    return pop_re();
+                } else {
+                    match File::open(file_name) {
+                        Ok(file) => {
+                            set_return_value(ScmObject::new_stream_file(file));
+                            return pop_re();
+                        }
+                        Err(_e) => {
+                            set_return_value(ScmObject::Error(String::from(
+                                "fn open: con not find File",
+                            )));
+                            return None;
+                        }
+                    }
+                }
+            }
+            BuildInFunction::Read => {
+                let mut stream = pop();
+
+                if let ScmObject::Stream(_) = stream {
+                    set_return_value(super::reader::scm_read(&mut stream));
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from(
+                        "fn Read: arg ist not a Stream",
+                    )));
+                    return None;
+                }
+            }
+            BuildInFunction::Close => {
+                let stream = pop();
+
+                if let ScmObject::Stream(mut s) = stream {
+                    s.close();
+                    set_return_value(ScmObject::Void);
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from(
+                        "fn Close: arg ist not a Stream",
+                    )));
+                    return None;
+                }
+            }
+            BuildInFunction::RandomNumber => {
+                let max = pop();
+
+                if let ScmObject::Integer(i) = max {
+                    let num = rand::thread_rng().gen_range(0, i);
+                    set_return_value(ScmObject::Integer(num));
+                    return pop_re();
+                } else {
+                    set_return_value(ScmObject::Error(String::from(
+                        "fn Random: arg ist not a Integer",
+                    )));
+                    return None;
                 }
             }
             BuildInFunction::Exit => {
@@ -767,7 +840,6 @@ fn t_read() -> Option<ReturnFunction> {
         set_return_value(ScmObject::Void);
         return pop_re();
     } else {
-        // TODO set Top env
         push(env.clone());
         push(input_stream);
         push(env);
